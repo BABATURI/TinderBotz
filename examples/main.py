@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     # Alternatively, you can also use your phone number to login
     country = "Israel"
-    phone_number = "528771331"
+    phone_number = "0"
     session.login_using_sms(country, phone_number)
 
     # adjust allowed distance for geomatches
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         #   - it's best to apply a randomness in your liking by sometimes disliking.
         #   - some sleeping between two actions is recommended
         # by default the amount is 1, ratio 100% and sleep 1 second
-        session.like(amount=1000, ratio="75.5%", sleep=4)
+        #session.like(amount=1000, ratio="75.5%", sleep=4)
 
         # # Getting matches takes a while, so recommended you load as much as possible from local storage
         # # get new matches, with whom you haven't interacted yet
@@ -55,10 +55,10 @@ if __name__ == "__main__":
         #     session.store_local(match)
         #
         # # let's scrape some geomatches now
-        # for _ in range(5):
-        #     # get profile data (name, age, bio, images, ...)
-        #     geomatch = session.get_geomatch(quickload=False)
-        #     # store this data locally as json with reference to their respective (locally stored) images
-        #     session.store_local(geomatch)
-        #     # dislike the profile, so it will show us the next geomatch (since we got infinite amount of dislikes anyway)
-        #     session.like()
+        for _ in range(5):
+            # get profile data (name, age, bio, images, ...)
+            geomatch = session.get_geomatch(quickload=False)
+            # store this data locally as json with reference to their respective (locally stored) images
+            session.store_local(geomatch)
+            # dislike the profile, so it will show us the next geomatch (since we got infinite amount of dislikes anyway)
+            session.like()

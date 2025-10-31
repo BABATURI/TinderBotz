@@ -1,12 +1,13 @@
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from selenium.webdriver.common.action_chains import ActionChains
-from tinderbotz.helpers.xpaths import content, modal_manager
-from selenium.webdriver.common.keys import Keys
+import os
+import time
 
-import time, os
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from tinderbotz.helpers.xpaths import content, modal_manager
+
 
 class ProfileHelper:
 

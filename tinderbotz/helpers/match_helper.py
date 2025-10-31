@@ -1,14 +1,17 @@
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, NoSuchElementException
 import time
 
-from tinderbotz.helpers.match import Match
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, \
+    NoSuchElementException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 from tinderbotz.helpers.constants_helper import Socials
 from tinderbotz.helpers.loadingbar import LoadingBar
+from tinderbotz.helpers.match import Match
 from tinderbotz.helpers.xpaths import content, modal_manager
+
 
 class MatchHelper:
 
