@@ -156,20 +156,14 @@ class GeomatchHelper:
             self._open_profile()
 
         try:
-            xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/div[1]/div/h1'
+            xpath = '//*[@id="main-content"]/div[1]/div/div/div/div[1]/div[1]/div[1]/div/div/h1/span[1]'
             # wait for element to appear
             WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
                 (By.XPATH, xpath)))
 
             element = self.browser.find_element(By.XPATH, xpath)
 
-            name = element.text
-            if not name:
-                xpath2 = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/div[1]/div/h1'
-                element2 = self.browser.find_element(By.XPATH, xpath2)
-                name = element2.text
-
-            return name
+            return element.text
         except Exception as e:
             pass
 
@@ -180,7 +174,7 @@ class GeomatchHelper:
         age = None
 
         try:
-            xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/div[1]/span'
+            xpath = f'//*[@id="main-content"]/div[1]/div/div/div/div[1]/div[1]/div[1]/div/div/h1/span[2]'
 
             # wait for element to appear
             WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(

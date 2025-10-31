@@ -1,36 +1,32 @@
 # Selenium: automation of browser
-from selenium import webdriver
 # from webdriver_manager.chrome import ChromeDriverManager
-import undetected_chromedriver as uc
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementNotVisibleException
-from selenium.webdriver.common.by import By
-
-
+import atexit
 # some other imports :-)
 import os
-import platform
-import time
 import random
-import requests
-import atexit
+import time
 from pathlib import Path
 
+import undetected_chromedriver as uc
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, \
+    ElementNotVisibleException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from tinderbotz.addproxy import get_proxy_extension
+from tinderbotz.helpers.constants_helper import Printouts
+from tinderbotz.helpers.email_helper import EmailHelper
 # Tinderbotz: helper classes
 from tinderbotz.helpers.geomatch import Geomatch
-from tinderbotz.helpers.match import Match
-from tinderbotz.helpers.profile_helper import ProfileHelper
-from tinderbotz.helpers.preferences_helper import PreferencesHelper
 from tinderbotz.helpers.geomatch_helper import GeomatchHelper
-from tinderbotz.helpers.match_helper import MatchHelper
 from tinderbotz.helpers.login_helper import LoginHelper
+from tinderbotz.helpers.match import Match
+from tinderbotz.helpers.match_helper import MatchHelper
+from tinderbotz.helpers.preferences_helper import PreferencesHelper
+from tinderbotz.helpers.profile_helper import ProfileHelper
 from tinderbotz.helpers.storage_helper import StorageHelper
-from tinderbotz.helpers.email_helper import EmailHelper
-from tinderbotz.helpers.constants_helper import Printouts
 from tinderbotz.helpers.xpaths import *
-from tinderbotz.addproxy import get_proxy_extension
 
 
 class Session:
@@ -118,6 +114,7 @@ class Session:
             self.browser = uc.Chrome(options=options)  # ChromeDriverManager().install(),
         except Exception as e:
             print(str(e))
+            print("maybe you should update chrome")
             raise
         # self.browser = webdriver.Chrome(options=options)
         # self.browser.set_window_size(1250, 750)
@@ -195,7 +192,8 @@ class Session:
     def login_using_sms(self, country, phone_number):
         if not self._is_logged_in():
             helper = LoginHelper(browser=self.browser)
-            helper.login_by_sms(country, phone_number)
+            # Note: Sms login isn't supported o more
+            #helper.login_by_sms(country, phone_number)
             time.sleep(5)
         if not self._is_logged_in():
             print('Manual interference is required.')

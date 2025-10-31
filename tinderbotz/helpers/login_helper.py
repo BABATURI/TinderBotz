@@ -18,7 +18,7 @@ class LoginHelper:
 
     def _click_login_button(self):
         try:
-            xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div/div/header/div/div[2]/div[2]/a'
+            xpath = f'//a//div[text()="Log in"]'
             WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
                 (By.XPATH, xpath)))
             button = self.browser.find_element(By.XPATH, xpath)
