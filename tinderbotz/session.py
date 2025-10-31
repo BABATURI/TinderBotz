@@ -1,7 +1,7 @@
 # Selenium: automation of browser
 from selenium import webdriver
 # from webdriver_manager.chrome import ChromeDriverManager
-import undetected_chromedriver.v2 as uc
+import undetected_chromedriver as uc
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -47,6 +47,8 @@ class Session:
         }
 
         start_session = time.time()
+
+        self.started = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
         # this function will run when the session ends
         @atexit.register
@@ -112,7 +114,11 @@ class Session:
 
         # Getting the chromedriver from cache or download it from internet
         print("Getting ChromeDriver ...")
-        self.browser = uc.Chrome(options=options)  # ChromeDriverManager().install(),
+        try:
+            self.browser = uc.Chrome(options=options)  # ChromeDriverManager().install(),
+        except Exception as e:
+            print(str(e))
+            raise
         # self.browser = webdriver.Chrome(options=options)
         # self.browser.set_window_size(1250, 750)
 
@@ -122,8 +128,7 @@ class Session:
         # Cool banner
         print(Printouts.BANNER.value)
         time.sleep(1)
-
-        self.started = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        
         print("Started session: {}\n\n".format(self.started))
 
     # Setting a custom location
@@ -223,9 +228,9 @@ class Session:
             helper = GeomatchHelper(browser=self.browser)
             amount_liked = 0
             # handle one time up front, from then on check after every action instead of before
-            self._handle_potential_popups()
             print("\nLiking profiles started.")
             while amount_liked < amount:
+                self._handle_potential_popups()
                 # randomize sleep
                 if randomize_sleep:
                     sleep = random.uniform(0.5, 2.3) * initial_sleep
@@ -501,4 +506,3 @@ class Session:
             print(f"You've liked {self.session_data['like']} profiles during this session.")
         if dislikes > 0:
             print(f"You've disliked {self.session_data['dislike']} profiles during this session.")
-
