@@ -200,6 +200,7 @@ class Session:
             input('press ENTER to continue')
 
     def store_local(self, match):
+        # TODO: storing images is broken, need to fix it later
         if isinstance(match, Match):
             filename = 'matches'
         elif isinstance(match, Geomatch):

@@ -321,13 +321,20 @@ class GeomatchHelper:
 		idx = 0
 		while True:
 			elements = self.browser.find_elements(By.XPATH, f'//*[@id="carousel-item-{idx}"]/div/div')
+			
 			if len(elements) > 1:
 				raise Exception("Expected only 1, wtf")
 
 			if len(elements) == 0:
 				break
-
-			images += [x.screenshot_as_png for x in elements]
+			
+   			# TODO: image parsing fails here
+			x =  elements[0].get_attribute("outerHTML")
+			q = "&quot;"
+			start = x[x.find('url(') + 4 + len(q):]
+			image_url = start[:start.find(q)].replace("&amp;", "&")
+			images.append(image_url)
+			# images += [x.screenshot_as_png for x in elements]
 			idx += 1
 
 			action = ActionChains(self.browser)

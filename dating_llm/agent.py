@@ -3,7 +3,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI, HarmBlockThreshold, H
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
-from tools import get_tools, find_tool_by_name, get_dating_tools
+from .tools import get_tools, find_tool_by_name, get_dating_tools
 import os
 import logging
 
@@ -16,8 +16,11 @@ with open(".geminikey", "r") as f:
     os.environ["GOOGLE_API_KEY"] = key
 
 
-def run_agent(chain, query):
-    messages = [HumanMessage(query)]
+def run_agent(chain, messages):
+    if not isinstance(messages, list):
+        messages = [messages]
+    
+    # messages = [HumanMessage(query)]
     # message_with_image = HumanMessage(
     # content=[
     #     {"type": "text", "text": "Here is an image I want to discuss:"},
@@ -50,8 +53,8 @@ def run_agent(chain, query):
             
 
         ai_msg = chain.invoke(messages)
-    print("model response >>>", ai_msg.content)
-    return ai_msg.content
+    logger.debug("model response >>>", ai_msg.content)
+    return ai_msg
 
 
 def create_agent(prompt, tools=[]):
@@ -68,7 +71,8 @@ def create_agent(prompt, tools=[]):
         },
         # other params...
     )
-    llm_with_tools = llm.bind_tools(tools)
+    # llm_with_tools = llm.bind_tools(tools)
+    llm_with_tools = llm
     prompt = ChatPromptTemplate.from_messages(
         [
             (
