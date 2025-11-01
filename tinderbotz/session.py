@@ -210,9 +210,8 @@ class Session:
             assert False
 
         # store its images
-        for url in match.image_urls:
-            hashed_image = StorageHelper.store_image_as(url=url, directory='data/{}/images'.format(filename))
-            match.images_by_hashes.append(hashed_image)
+        for image in match.images:
+            StorageHelper.store_image_as(image=image, directory='data/{}/images'.format(filename))
 
         # store its userdata
         StorageHelper.store_match(match=match, directory='data/{}'.format(filename), filename=filename)
@@ -276,19 +275,11 @@ class Session:
             helper = GeomatchHelper(browser=self.browser)
             self._handle_potential_popups()
 
-            name = None
-            attempts = 0
-            max_attempts = 3
-            while not name and attempts < max_attempts:
-                attempts += 1
-                name = helper.get_name()
-                self._handle_potential_popups() # Popup handling on first geomatch
-                time.sleep(1)
-
+            name = helper.get_name()
             age = helper.get_age()
 
             bio, passions, lifestyle, basics, anthem, looking_for = helper.get_bio_and_passions()
-            image_urls = helper.get_image_urls(quickload)
+            images = helper.get_images()
             instagram = helper.get_insta(bio)
             rowdata = helper.get_row_data()
             work = rowdata.get('work')
@@ -298,7 +289,7 @@ class Session:
             gender = rowdata.get('gender')
 
             return Geomatch(name=name, age=age, work=work, gender=gender, study=study, home=home, distance=distance,
-                            bio=bio, passions=passions, lifestyle=lifestyle, basics=basics, anthem=anthem, looking_for=looking_for, image_urls=image_urls, instagram=instagram)
+                            bio=bio, passions=passions, lifestyle=lifestyle, basics=basics, anthem=anthem, looking_for=looking_for, instagram=instagram, images=images)
 
     def get_chat_ids(self, new=True, messaged=True):
         if self._is_logged_in():
