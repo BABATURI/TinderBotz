@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
         # check if crucial data is not empty (This will rarely be the case tho, but we want a 'clean' dataset
         if geomatch.get_name() is not None \
-                and geomatch.get_image_urls() != []:
+                and geomatch.images() != []:
 
             # let's store the data of the geomatch locally (this includes all images!)
             session.store_local(geomatch)

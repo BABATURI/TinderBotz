@@ -408,7 +408,6 @@ class MatchHelper:
         name = self.get_name(chatid)
         age = self.get_age(chatid)
         bio = self.get_bio(chatid)
-        image_urls = self.get_image_urls(chatid, quickload)
 
         rowdata = self.get_row_data(chatid)
         work = rowdata.get('work')
@@ -419,7 +418,7 @@ class MatchHelper:
 
         passions = self.get_passions(chatid)
 
-        return Match(name=name, chatid=chatid, age=age, work=work, study=study, home=home, gender=gender, distance=distance, bio=bio, passions=passions, image_urls=image_urls)
+        return Match(name=name, chatid=chatid, age=age, work=work, study=study, home=home, gender=gender, distance=distance, bio=bio, passions=passions)
 
     def get_name(self, chatid):
         if not self._is_chat_opened(chatid):
@@ -522,54 +521,6 @@ class MatchHelper:
         except:
             # no bio included?
             return None
-
-    def get_image_urls(self, chatid, quickload):
-        try:
-            if not self._is_chat_opened(chatid):
-                self._open_chat(chatid)
-
-            image_urls = []
-
-            # only get url of first few images, and not click all bullets to get all image
-            elements = self.browser.find_elements(By.XPATH, "//div[@aria-label='Profile slider']")
-            for element in elements:
-                image_url = element.value_of_css_property('background-image').split('\"')[1]
-                if image_url not in image_urls:
-                    image_urls.append(image_url)
-
-
-            # return image urls without opening all images
-            if quickload:
-                return image_urls
-
-            classname = 'bullet'
-            # wait for element to appear
-            WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-                (By.CLASS_NAME, classname)))
-
-            image_btns = self.browser.find_elements_by_class_name(classname)
-
-            for btn in image_btns:
-                btn.click()
-                time.sleep(1)
-
-                elements = self.browser.find_elements(By.XPATH, "//div[@aria-label='Profile slider']")
-                for element in elements:
-                    image_url = element.value_of_css_property('background-image').split('\"')[1]
-                    if image_url not in image_urls:
-                        image_urls.append(image_url)
-
-        except StaleElementReferenceException:
-            pass
-
-        except TimeoutException:
-            pass
-
-        except Exception as e:
-            print("unhandled exception getImageUrls in match_helper")
-            print(e)
-
-        return image_urls
 
     def _is_chat_opened(self, chatid):
         # open the correct user if not happened yet
