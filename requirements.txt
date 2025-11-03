@@ -1,11 +1,9 @@
 selenium
 undetected-chromedriver==3.5.5
 webdriver-manager==4.0.1 
-Pillow==10.3.0
+Pillow
 deepface
 opencv-python
 numpy
-langchain
-langchain_community
-langchain-google-genai
+google-genai
 requests
