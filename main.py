@@ -32,32 +32,23 @@ def create_dating_agent():
     .
     """.format(tools="\n".join([f"- {tool.name}: {tool.description}" for tool in get_tools()]), user_preferences=user_preferences)
     
-    chain = create_agent(prompt=prompt, tools=get_dating_tools())
-    return chain
+    user_pref = "I like fit and blonde women with bright eyes who enjoy outdoor activities and have a good sense of humor."
+    dllm = DatingLLM(user_pref)
+    return dllm
 
 
-def run_dating_agent(chain, geomatch):
+def run_dating_agent(dllm, geomatch):
     query = f"""
-    Here is the profile information of a potential match:
     Name: {geomatch.name}
     Age: {geomatch.age}
     Bio: {geomatch.bio}
-    
-    Images url Follow as attached below:
     """
-    query += "\n".join(geomatch.images[:1])  # add first 5 image URLs
-    content = [{"type": "text", "text": query}]
-    # image_data = geomatch.images[:1]
-    # for image_url in image_data:
-    #     content.append({"type": "image_url", "image_url": {"url": image_url}})
+    image_data = geomatch.images[:3]
     
-    message_with_image = HumanMessage(content=content)
-    ai_msg = run_agent(chain, messages=message_with_image)
+    ai_msg, total_tokens = dllm.run_llm(query, image_data)
     print("model response >>>", ai_msg)
-    total_tokens = ai_msg.usage_metadata['total_tokens']  # access total tokens used
-    output_tokens = ai_msg.usage_metadata['output_tokens']  # access total tokens used
-    print(f"Total tokens used: {total_tokens}, Output tokens: {output_tokens}")
-    return ai_msg.content
+    print(f"Total tokens used: {total_tokens}")
+    return ai_msg
 
 
 if __name__ == "__main__":
