@@ -1,107 +1,106 @@
-
-from langchain_google_genai import ChatGoogleGenerativeAI, HarmBlockThreshold, HarmCategory
-
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage
-from .tools import get_tools, find_tool_by_name, get_dating_tools
 import os
-import logging
+import io
+import json
+import requests
+
+from PIL import Image
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
 
 
-logger = logging.getLogger(__name__)
+def _get_image_data(url):
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    orig_bytes = resp.content
+
+    try:
+        img = Image.open(io.BytesIO(orig_bytes))
+        # Resize if larger than max dimension
+        max_dim = 1024
+        if max(img.size) > max_dim:
+            ratio = max_dim / max(img.size)
+            new_size = (int(img.width * ratio), int(img.height * ratio))
+            img = img.resize(new_size, Image.LANCZOS)
+
+        out = io.BytesIO()
+        # Preserve alpha by using PNG, otherwise compress to JPEG
+        
+        img = img.convert("RGB")
+        img.save(out, format="JPEG", quality=70, optimize=True, progressive=True)
+
+        img_data = out.getvalue()
+        out.close()
+    except Exception:
+        # On failure, fall back to original bytes
+        img_data = orig_bytes
+    return img_data
 
 
-with open(".geminikey", "r") as f:
-    key = f.read().strip()
-    os.environ["GOOGLE_API_KEY"] = key
+def _response_to_json(text):
+    if not isinstance(text, str):
+        text = str(text)
+    start_marker = "```json"
+    end_marker = "```"
+    start = text.find(start_marker)
+    if start == -1:
+        raise ValueError("No '```json' block found in response")
+    start += len(start_marker)
+    end = text.find(end_marker, start)
+    if end == -1:
+        raise ValueError("No closing '```' found for JSON block")
+    json_str = text[start:end].strip()
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        try:
+            return json.loads(json_str.replace("'", '"'))
+        except Exception:
+            raise ValueError("Failed to parse JSON from code block") from e
 
 
-def run_agent(chain, messages):
-    if not isinstance(messages, list):
-        messages = [messages]
-    
-    # messages = [HumanMessage(query)]
-    # message_with_image = HumanMessage(
-    # content=[
-    #     {"type": "text", "text": "Here is an image I want to discuss:"},
-    #     {
-    #         "type": "image_url",
-    #         "image_url": {"url": f"data:image/jpeg;base64,{image_data}"},
-    #     },
-    # ])
-    # message_with_image_url = HumanMessage(
-    # content=[
-    #     {"type": "text", "text": "Please analyze this image:"},
-    #     {"type": "image_url", "image_url": {"url": image_url}},
-    # ])
-
-
-
-    ai_msg = chain.invoke(messages)
-    messages.append(ai_msg)
-    print(ai_msg.tool_calls)
-    while ai_msg and ai_msg.content == '' and len(messages) < 10:
-        if ai_msg.response_metadata['prompt_feedback']['block_reason'] != 0:
-            logger.error("Blocked by content filter")
-            return
-        # For simplicity, we only handle one tool call at a time
-        for tool_call in ai_msg.tool_calls:
-            logger.debug(f"Tool call: {tool_call}")
-            selected_tool = find_tool_by_name(tool_call["name"])
-            tool_msg = selected_tool.invoke(tool_call)
-            messages.append(tool_msg)
-            
-
-        ai_msg = chain.invoke(messages)
-    logger.debug("model response >>>", ai_msg.content)
-    return ai_msg
-
-
-def create_agent(prompt, tools=[]):
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        temperature=0.7,
-        max_tokens=None,
-        timeout=None,
-        max_retries=2,
-        safety_settings={
-            HarmCategory.HARM_CATEGORY_SEXUAL: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_UNSPECIFIED: HarmBlockThreshold.BLOCK_NONE,
-        },
-        # other params...
-    )
-    # llm_with_tools = llm.bind_tools(tools)
-    llm_with_tools = llm
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                prompt,
-            ),
-            ("human", "{input}"),
-        ]
-    )
-
-    chain = prompt | llm_with_tools
-    return chain
-
-
-def main():
-    # Define a simple prompt for the agent
-    prompt = """
-    You are a dating AI assistant That decides whether to like or dislike a potential match.
-    The following tools are available to you:
-    """ + "\n".join([f"- {tool.name}: {tool.description}" for tool in get_tools()])
-    prompt += """
-    Your goal is to decide whether to like or dislike a potential match based on the information provided.
-    Use all of the tools at your disposal to make an informed decision.
-    When you have enough information, respond with either "like" or "dislike".
+class DatingLLM:
+    prompt = """You are a dating assistant AI. your Job is to decide whether to like or dislike a profile based on the bio and images provided, and the user's preferences.
+    Respond with 'like' or 'dislike' only.
+    The user prefrences are" {user_preferences}
+    Profile Info: {profile_info}
+    There are a few images for the profile, attached into the query.
+    The output should be a JSON object with the following fields:
+    {{
+        "decision": "like" or "dislike",
+        "reason": "a brief explanation of the decision"
+    }}
     """
-    query = "create a file named test.txt with a dirty pickup line, written in hebrew"
-    chain = create_agent(prompt=prompt, tools=get_dating_tools())
-    run_agent(chain, query)
 
+    def __init__(self, user_pref):
+        self._user_pref = user_pref
+        load_dotenv()
+        api_key = os.getenv("GEMINI_API_KEY")
+        self.client = genai.Client(api_key=api_key)
+    
+    def close(self):
+        self.client.close()
 
-if __name__ == "__main__":
-    main()
+    def __exit__(self):
+        self.client.close()
+    
+    def run_llm(self, profile_bio, images_urls):
+        user_prompt = self.prompt.format(
+        user_preferences=self._user_pref,
+        profile_info=profile_bio,
+        )
+        contents = [
+            user_prompt
+        ]
+        for img_url in images_urls:
+            contents.append(types.Part.from_bytes(
+                data=_get_image_data(img_url),
+                mime_type='image/jpeg',
+            ))
+        response = self.client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=contents,
+        )
+        usage = response.usage_metadata
+        token_usage = usage.total_token_count
+        return _response_to_json(response.text), token_usage
