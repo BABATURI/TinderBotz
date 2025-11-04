@@ -5,3 +5,4 @@ chrome_profile/
 .geminikey
 .vscode/
 data/
+.env
