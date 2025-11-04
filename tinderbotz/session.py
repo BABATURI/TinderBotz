@@ -14,6 +14,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from basebot.basebot import BaseSession
+from basebot.match import Match, Geomatch
 from tinderbotz.addproxy import get_proxy_extension
 from tinderbotz.helpers.constants_helper import Printouts
 from tinderbotz.helpers.email_helper import EmailHelper
@@ -29,8 +31,10 @@ from tinderbotz.helpers.storage_helper import StorageHelper
 from tinderbotz.helpers.xpaths import *
 
 
-class Session:
+class Session(BaseSession):
     HOME_URL = "https://www.tinder.com/app/recs"
+    app_name = "tinder"
+    app_url = "https://tinder.com/app/recs"
 
     def __init__(self, headless=False, store_session=True, proxy=None, user_data=False):
         self.email = None
@@ -41,103 +45,8 @@ class Session:
             "dislike": 0,
             "superlike": 0
         }
-
-        start_session = time.time()
-
-        self.started = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-
-        # this function will run when the session ends
-        @atexit.register
-        def cleanup():
-            # End session duration
-            seconds = int(time.time() - start_session)
-            self.session_data["duration"] = seconds
-
-            # add session data into a list of messages
-            lines = []
-            for key in self.session_data:
-                message = "{}: {}".format(key, self.session_data[key])
-                lines.append(message)
-
-            # print out the statistics of the session
-            try:
-                box = self._get_msg_box(lines=lines, title="Tinderbotz")
-                print(box)
-            finally:
-                print("Started session: {}".format(self.started))
-                y = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print("Ended session: {}".format(y))
-            
-            # Close browser properly
-            self.browser.quit()
-
-        # Go further with the initialisation
-        # Setting some options of the browser here below
-
-        options = uc.ChromeOptions()
-
-        # Create empty profile to avoid annoying Mac Popup
-        if store_session:
-            if not user_data:
-                user_data = f"{Path().absolute()}/chrome_profile/"
-            if not os.path.isdir(user_data):
-                os.mkdir(user_data)
-
-            Path(f'{user_data}First Run').touch()
-            options.add_argument(f"--user-data-dir={user_data}")
-
-        #options.add_argument("--start-maximized")
-        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
-        options.add_argument("--lang=en-GB")
-
-        if headless:
-            options.headless = True
-
-        if proxy:
-            if '@' in proxy:
-                parts = proxy.split('@')
-
-                user = parts[0].split(':')[0]
-                pwd = parts[0].split(':')[1]
-
-                host = parts[1].split(':')[0]
-                port = parts[1].split(':')[1]
-
-                extension = get_proxy_extension(PROXY_HOST=host, PROXY_PORT=port, PROXY_USER=user, PROXY_PASS=pwd)
-                options.add_extension(extension)
-            else:
-                options.add_argument(f'--proxy-server=http://{proxy}')
-
-        # Getting the chromedriver from cache or download it from internet
-        print("Getting ChromeDriver ...")
-        try:
-            self.browser = uc.Chrome(options=options)  # ChromeDriverManager().install(),
-        except Exception as e:
-            print(str(e))
-            print("maybe you should update chrome")
-            raise
-        # self.browser = webdriver.Chrome(options=options)
-        # self.browser.set_window_size(1250, 750)
-
-        # clear the console based on the operating system you're using
-        #os.system('cls' if os.name == 'nt' else 'clear')
-
-        # Cool banner
-        print(Printouts.BANNER.value)
-        time.sleep(1)
         
-        print("Started session: {}\n\n".format(self.started))
-
-    # Setting a custom location
-    def set_custom_location(self, latitude, longitude, accuracy="100%"):
-
-        params = {
-            "latitude": latitude,
-            "longitude": longitude,
-            "accuracy": int(accuracy.split('%')[0])
-        }
-
-        self.browser.execute_cdp_cmd("Page.setGeolocationOverride", params)
+        super().__init__(headless, store_session, user_data)
 
     # This will send notification when you get a match to your email used to logged in.
     def set_email_notifications(self, boolean):
@@ -168,129 +77,47 @@ class Session:
         helper = ProfileHelper(browser=self.browser)
         helper.add_photo(filepath)
 
-    # Actions of the session
-    def login_using_google(self, email, password):
-        self.email = email
+    def login(self):
         if not self._is_logged_in():
             helper = LoginHelper(browser=self.browser)
-            helper.login_by_google(email, password)
+            # Note: Sms login isn't supported no more
+            # so we will wait for the user to log on:
             time.sleep(5)
-        if not self._is_logged_in():
-            print('Manual interference is required.')
+            print('Manual interference is required. Please Login')
             input('press ENTER to continue')
-
-    def login_using_facebook(self, email, password):
-        self.email = email
-        if not self._is_logged_in():
-            helper = LoginHelper(browser=self.browser)
-            helper.login_by_facebook(email, password)
-            time.sleep(5)
-        if not self._is_logged_in():
-            print('Manual interference is required.')
-            input('press ENTER to continue')
-
+    
     def login_using_sms(self, country, phone_number):
+        self.login()
         if not self._is_logged_in():
             helper = LoginHelper(browser=self.browser)
-            # Note: Sms login isn't supported o more
-            #helper.login_by_sms(country, phone_number)
+            # Note: Sms login isn't supported no more
+            # so we will wait for the user to log on:
             time.sleep(5)
-        if not self._is_logged_in():
-            print('Manual interference is required.')
+            print('Manual interference is required. Please Login')
             input('press ENTER to continue')
-
-    def store_local(self, match):
-        # TODO: storing images is broken, need to fix it later
-        if isinstance(match, Match):
-            filename = 'matches'
-        elif isinstance(match, Geomatch):
-            filename = 'geomatches'
-        else:
-            print("type of match is unknown, storing local impossible")
-            print("Crashing in 3.2.1... :)")
-            assert False
-
-        # store its images
-        for image in match.images:
-            StorageHelper.store_image_as(image=image, directory='data/{}/images'.format(filename))
-
-        # store its userdata
-        StorageHelper.store_match(match=match, directory='data/{}'.format(filename), filename=filename)
-
-    def like(self, amount=1, ratio='100%', sleep=1, randomize_sleep = True):
-        
-        initial_sleep = sleep
-        ratio = float(ratio.split('%')[0]) / 100
-
-        if self._is_logged_in():
-            helper = GeomatchHelper(browser=self.browser)
-            amount_liked = 0
-            # handle one time up front, from then on check after every action instead of before
-            print("\nLiking profiles started.")
-            while amount_liked < amount:
-                self._handle_potential_popups()
-                # randomize sleep
-                if randomize_sleep:
-                    sleep = random.uniform(0.5, 2.3) * initial_sleep
-                if random.random() <= ratio:
-                    if helper.like():
-                        amount_liked += 1
-                        # update for stats after session ended
-                        self.session_data['like'] += 1
-                        print(f"{amount_liked}/{amount} liked, sleep: {sleep}")
-                else:
-                    helper.dislike()
-                    # update for stats after session ended
-                    self.session_data['dislike'] += 1
-
-                #self._handle_potential_popups()
-                time.sleep(sleep)
-
-            self._print_liked_stats()
-
-    def dislike(self, amount=1):
-        if self._is_logged_in():
-            helper = GeomatchHelper(browser=self.browser)
-            for _ in range(amount):
-                self._handle_potential_popups()
-                helper.dislike()
-
-                # update for stats after session ended
-                self.session_data['dislike'] += 1
-                #time.sleep(1)
-            self._print_liked_stats()
-
-    def superlike(self, amount=1):
-        if self._is_logged_in():
-            helper = GeomatchHelper(browser=self.browser)
-            for _ in range(amount):
-                self._handle_potential_popups()
-                helper.superlike()
-                # update for stats after session ended
-                self.session_data['superlike'] += 1
-                time.sleep(1)
-            self._print_liked_stats()
 
     def get_geomatch(self, quickload=True):
-        if self._is_logged_in():
-            helper = GeomatchHelper(browser=self.browser)
-            self._handle_potential_popups()
+        if not self._is_logged_in():
+            return
+        
+        helper = GeomatchHelper(browser=self.browser)
+        self._handle_potential_popups()
 
-            name = helper.get_name()
-            age = helper.get_age()
+        name = helper.get_name()
+        age = helper.get_age()
 
-            bio, passions, lifestyle, basics, anthem, looking_for = helper.get_bio_and_passions()
-            images = helper.get_images()
-            instagram = helper.get_insta(bio)
-            rowdata = helper.get_row_data()
-            work = rowdata.get('work')
-            study = rowdata.get('study')
-            home = rowdata.get('home')
-            distance = rowdata.get('distance')
-            gender = rowdata.get('gender')
+        bio, passions, lifestyle, basics, anthem, looking_for = helper.get_bio_and_passions()
+        images = helper.get_images()
+        instagram = helper.get_insta(bio)
+        rowdata = helper.get_row_data()
+        work = rowdata.get('work')
+        study = rowdata.get('study')
+        home = rowdata.get('home')
+        distance = rowdata.get('distance')
+        gender = rowdata.get('gender')
 
-            return Geomatch(name=name, age=age, work=work, gender=gender, study=study, home=home, distance=distance,
-                            bio=bio, passions=passions, lifestyle=lifestyle, basics=basics, anthem=anthem, looking_for=looking_for, instagram=instagram, images=images)
+        return Geomatch(name=name, age=age, work=work, gender=gender, study=study, home=home, distance=distance,
+                        bio=bio, passions=passions, lifestyle=lifestyle, basics=basics, anthem=anthem, looking_for=looking_for, instagram=instagram, images=images)
 
     def get_chat_ids(self, new=True, messaged=True):
         if self._is_logged_in():
@@ -459,40 +286,15 @@ class Session:
 
         return None
 
-    def _is_logged_in(self):
-        # make sure tinder website is loaded for the first time
-        if not "tinder" in self.browser.current_url:
-            # enforce english language
-            self.browser.get("https://tinder.com/?lang=en")
-            time.sleep(1.5)
+    # def _is_logged_in(self):
+    #     # make sure tinder website is loaded for the first time
+    #     if not "tinder" in self.browser.current_url:
+    #         # enforce english language
+    #         self.browser.get("https://tinder.com/?lang=en")
+    #         time.sleep(1.5)
 
-        if "tinder.com/app/" in self.browser.current_url:
-            return True
-        else:
-            print("User is not logged in yet.\n")
-            return False
-
-    def _get_msg_box(self, lines, indent=1, width=None, title=None):
-        """Print message-box with optional title."""
-        space = " " * indent
-        if not width:
-            width = max(map(len, lines))
-        box = f'/{"=" * (width + indent * 2)}\\\n'  # upper_border
-        if title:
-            box += f'|{space}{title:<{width}}{space}|\n'  # title
-            box += f'|{space}{"-" * len(title):<{width}}{space}|\n'  # underscore
-        box += ''.join([f'|{space}{line:<{width}}{space}|\n' for line in lines])
-        box += f'\\{"=" * (width + indent * 2)}/'  # lower_border
-        return box
-
-    def _print_liked_stats(self):
-        likes = self.session_data['like']
-        dislikes = self.session_data['dislike']
-        superlikes = self.session_data['superlike']
-
-        if superlikes > 0:
-            print(f"You've superliked {self.session_data['superlike']} profiles during this session.")
-        if likes > 0:
-            print(f"You've liked {self.session_data['like']} profiles during this session.")
-        if dislikes > 0:
-            print(f"You've disliked {self.session_data['dislike']} profiles during this session.")
+    #     if "tinder.com/app/" in self.browser.current_url:
+    #         return True
+    #     else:
+    #         print("User is not logged in yet.\n")
+    #         return False

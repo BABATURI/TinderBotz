@@ -17,6 +17,7 @@ class GeomatchHelper:
 
 	def __init__(self, browser):
 		self.browser = browser
+		self.opened_profile = False
 		if "/app/recs" not in self.browser.current_url:
 			self._get_home_page()
 
@@ -114,28 +115,22 @@ class GeomatchHelper:
 
 		except (TimeoutException, ElementClickInterceptedException):
 			self._get_home_page()
+   
+	def _close_profile(self, second_try=False):
+		if self._is_profile_opened():
+			return
 
+		action = ActionChains(self.browser)
+		action.send_keys(Keys.ARROW_DOWN).perform()
+		self.opened_profile = False
+   
 	def _open_profile(self, second_try=False):
-		if self._is_profile_opened(): return;
+		if self._is_profile_opened():
+			return
 		try:
-			# xpath = '//button'
-			# WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-			#    (By.XPATH, xpath)))
-			# buttons = self.browser.find_elements(By.XPATH, xpath)
-
-			# for button in buttons:
-			#    # some buttons might not have a span as subelement
-			#    try:
-			#        text_span = button.find_element(By.XPATH, './/span').text
-			#        if 'open profile' in text_span.lower():
-			#            button.click()
-			#            break
-			#    except:
-			#        continue
-
-			# New Implementation
 			action = ActionChains(self.browser)
 			action.send_keys(Keys.ARROW_UP).perform()
+			self.opened_profile = True
 
 		# time.sleep(1)
 
@@ -211,9 +206,19 @@ class GeomatchHelper:
 	_GENDER_SVG_PATH = "M15.507 13.032c1.14-.952 1.862-2.656 1.862-5.592C17.37 4.436 14.9 2 11.855 2 8.81 2 6.34 4.436 6.34 7.44c0 3.07.786 4.8 2.02 5.726-2.586 1.768-5.054 4.62-4.18 6.204 1.88 3.406 14.28 3.606 15.726 0 .686-1.71-1.828-4.608-4.4-6.338"
 
 	def get_row_data(self):
+		title_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div/div/div[2]/h2'
+		content_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div/div/div[3]'
+		acc_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div'
+		
+    	# iterate this content to find items
 		if not self._is_profile_opened():
-			self._open_profile()
+			pass
+		else:
+			self._close_profile()
 
+		div = self.browser.find_element(By.XPATH, acc_xpath)
+		# if has in it /div[2]/div[2]/div[2], we found distance...
+		return
 		rowdata = {}
 
 		xpath = '//div[@class="Row"]'
@@ -262,19 +267,19 @@ class GeomatchHelper:
 		lifestyle = []
 
 		# Bio
+		bio_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div/div[2]/div[2]'
 		try:
-			bio = self.browser.find_element(By.CSS_SELECTOR,
-			                                'div[class*="Px(16px) Py(12px) Us(t)"').text
-
+			self._close_profile()
+			bio = self.browser.find_element(By.XPATH, bio_xpath).text
+			self._open_profile()
 		except Exception as e:
 			pass
 
 		# Looking for
 		try:
-			looking_for_el = self.browser.find_element(By.CSS_SELECTOR,
-			                                           'div[class="Px(16px) My(12px)"]>div[class="D(b)"]')
-			looking_for = looking_for_el.find_element(By.CSS_SELECTOR,
-			                                          'div[class="Typs(subheading-1) CenterAlign"]').text
+			xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div[1]/div[2]/div[2]/div/div[1]/div/div[2]/span[2]'
+			looking_for = self.browser.find_element(By.XPATH,
+			                                          xpath).text
 
 		except Exception as e:
 			pass
@@ -322,8 +327,9 @@ class GeomatchHelper:
 		while True:
 			elements = self.browser.find_elements(By.XPATH, f'//*[@id="carousel-item-{idx}"]/div/div')
 			
-			if len(elements) > 1:
-				raise Exception("Expected only 1, wtf")
+			# can be more than 1...
+			# if len(elements) > 1:
+			# 	raise Exception("Expected only 1, wtf")
 
 			if len(elements) == 0:
 				break
@@ -420,6 +426,7 @@ class GeomatchHelper:
 
 
 	def _is_profile_opened(self):
+		return self.opened_profile
 		if '/profile' in self.browser.current_url:
 			return True
 		else:

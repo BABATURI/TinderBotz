@@ -2,7 +2,7 @@
 Created by Frederikme (TeetiFM)
 '''
 
-from tinderbotz.session import Session
+from tinderbotz.session import Session, Geomatch
 from dating_llm.agent import *
 # import base64
 
@@ -11,42 +11,42 @@ from dating_llm.agent import *
 
 
 def create_dating_agent():
-    user_preferences = """
-    The user has the following preferences:
-    - Interested in blonde women
-    - Interested in women with blue eyes
-    - Interested in fit and athletic women
-    """
-    prompt = """
-    You are a dating AI assistant That decides whether to like or dislike a potential match.
-    The following tools are available to you:
-    {tools}
-    Your goal is to decide whether to like or dislike a potential match based on the information provided.
-    The user has the following preferences:
-    {user_preferences}
-    Use all of the tools at your disposal to make an informed decision, you must access the match's images urls.
-    When you have enough information, respond with this format:
-    'desicion':  <'like' or 'dislike'>;
-    'reason': <your reason here>;
-    'match_description': <match information you observed in text here>;
-    .
-    """.format(tools="\n".join([f"- {tool.name}: {tool.description}" for tool in get_tools()]), user_preferences=user_preferences)
+    # user_preferences = """
+    # The user has the following preferences:
+    # - Interested in blonde women
+    # - Interested in women with blue eyes
+    # - Interested in fit and athletic women
+    # """
+    # prompt = """
+    # You are a dating AI assistant That decides whether to like or dislike a potential match.
+    # The following tools are available to you:
+    # {tools}
+    # Your goal is to decide whether to like or dislike a potential match based on the information provided.
+    # The user has the following preferences:
+    # {user_preferences}
+    # Use all of the tools at your disposal to make an informed decision, you must access the match's images urls.
+    # When you have enough information, respond with this format:
+    # 'desicion':  <'like' or 'dislike'>;
+    # 'reason': <your reason here>;
+    # 'match_description': <match information you observed in text here>;
+    # .
+    # """.format(tools="\n".join([f"- {tool.name}: {tool.description}" for tool in []]), user_preferences=user_preferences)
     
-    user_pref = "I like fit and blonde women with bright eyes who enjoy outdoor activities and have a good sense of humor."
+    user_pref = "I like fit and slim, blonde / hazel haired women with bright eyes who enjoy outdoor activities and have a good sense of humor."
     dllm = DatingLLM(user_pref)
     return dllm
 
 
-def run_dating_agent(dllm, geomatch):
+def run_dating_agent(dllm: DatingLLM, geomatch: Geomatch):
     query = f"""
     Name: {geomatch.name}
     Age: {geomatch.age}
+    Looking For: {geomatch.looking_for}
     Bio: {geomatch.bio}
     """
     image_data = geomatch.images[:3]
     
     ai_msg, total_tokens = dllm.run_llm(query, image_data)
-    print("model response >>>", ai_msg)
     print(f"Total tokens used: {total_tokens}")
     return ai_msg
 
@@ -54,8 +54,8 @@ def run_dating_agent(dllm, geomatch):
 if __name__ == "__main__":
     # creates instance of session
     session = Session()
-
-    session.set_custom_location(latitude=32.054107, longitude=34.860652)
+    location = (32.15792931573261, 34.84213125060156)
+    session.set_custom_location(latitude=location[0], longitude=location[1])
 
     # Alternatively, you can also use your phone number to login
     country = "Israel"
@@ -77,44 +77,21 @@ if __name__ == "__main__":
 
     #ROUNDS = 10
     chain = create_dating_agent()
-    while True:
 
-        # spam likes, dislikes and superlikes
-        # to avoid being banned:
-        #   - it's best to apply a randomness in your liking by sometimes disliking.
-        #   - some sleeping between two actions is recommended
-        # by default the amount is 1, ratio 100% and sleep 1 second
-        #session.like(amount=1000, ratio="75.5%", sleep=4)
-
-        # # Getting matches takes a while, so recommended you load as much as possible from local storage
-        # # get new matches, with whom you haven't interacted yet
-        # # Let's load the first 10 new matches to interact with later on.
-        # # quickload on false will make sure ALL images are stored, but this might take a lot more time
-        # new_matches = session.get_new_matches(amount=10, quickload=False)
-        # # get already interacted with matches (matches with whom you've chatted already)
-        # messaged_matches = session.get_messaged_matches()
-        #
-        # # you can store the data and images of these matches now locally in data/matches
-        # # For now let's just store the messaged_matches
-        # for match in messaged_matches:
-        #     session.store_local(match)
-        #
-        # # let's scrape some geomatches now
-        for _ in range(5):
-            # get profile data (name, age, bio, images, ...)
-            geomatch = session.get_geomatch(quickload=False)
-            # store this data locally as json with reference to their respective (locally stored) images
-            # session.store_local(geomatch)
-            # Use the dating agent to decide whether to like or dislike this profile
-            decision = run_dating_agent(chain, geomatch)
-            
-            print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision}")
-            if decision == "like":
-                pass
-                # session.like()
-            else:
-                pass
-                # session.dislike()
-            input("Press Enter to continue...")
-            # dislike the profile, so it will show us the next geomatch (since we got infinite amount of dislikes anyway)
-            # session.like()
+    auto_swipe_count = 9
+    for _ in range(auto_swipe_count):
+        # get profile data (name, age, bio, images, ...)
+        geomatch = session.get_geomatch(quickload=False)
+        # store this data locally as json with reference to their respective (locally stored) images
+        # session.store_local(geomatch)
+        # Use the dating agent to decide whether to like or dislike this profile
+        decision_json = run_dating_agent(chain, geomatch)
+        
+        print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
+        if decision_json["decision"] == "like":
+            session.like()
+        else:
+            session.dislike()
+        # input("Press Enter to continue...")
+        # dislike the profile, so it will show us the next geomatch (since we got infinite amount of dislikes anyway)
+        # session.like()

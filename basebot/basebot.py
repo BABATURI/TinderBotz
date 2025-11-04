@@ -31,7 +31,7 @@ from tinderbotz.helpers.xpaths import *
 BOT_NAME = "BaseBot"
 
 
-class Session:
+class BaseSession:
     def __init__(self, headless=False, store_session=True, proxy=None, user_data=False):
         self.session_data = {
             "duration": 0,
@@ -42,8 +42,9 @@ class Session:
         # self.app_url and self.app_name must be set by children
         self.lower_sleep_time = 1.0
         self.upper_sleep_time = 3.0
-        self.app_url = None
-        self.app_name = None
+        if not hasattr(self, "app_url") or not hasattr(self, "app_name"):
+            raise ValueError("self.app_url is not set")
+        
         start_session = time.time()
 
         self.started = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -247,8 +248,18 @@ class Session:
         
         self._print_liked_stats()
 
-    def superlike(self, amount=1):
-        raise NotImplementedError()
+    def superlike(self, randomize_sleep=True):
+        if not self._is_logged_in():
+            return
+        try:
+            action = ActionChains(self.browser)
+            action.send_keys(Keys.ENTER).perform()
+        except (TimeoutException, ElementClickInterceptedException):
+            self._get_home_page()
+            return False
+        if randomize_sleep:
+            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+        return True
 
     def get_geomatch(self, quickload=True) -> Geomatch:
         # get current match
@@ -280,7 +291,7 @@ class Session:
 
     def _is_logged_in(self):
         # make sure tinder website is loaded for the first time
-        if not self.app_name + "/app" in self.browser.current_url:
+        if not self.app_name in self.browser.current_url:
             # enforce english language
             self.browser.get(self.app_url)
             time.sleep(5)
