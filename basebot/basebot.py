@@ -291,12 +291,12 @@ class BaseSession:
 
     def _is_logged_in(self):
         # make sure tinder website is loaded for the first time
-        if not self.app_name in self.browser.current_url:
+        if not self.app_logged_in_match in self.browser.current_url:
             # enforce english language
             self.browser.get(self.app_url)
             time.sleep(5)
 
-        if self.app_url in self.browser.current_url:
+        if self.app_logged_in_match in self.browser.current_url:
             return True
         else:
             print("User is not logged in yet.\n")

@@ -35,6 +35,7 @@ class Session(BaseSession):
     HOME_URL = "https://www.tinder.com/app/recs"
     app_name = "tinder"
     app_url = "https://tinder.com/app/recs"
+    app_logged_in_match = "tinder.com/app"
 
     def __init__(self, headless=False, store_session=True, proxy=None, user_data=False):
         self.email = None
@@ -102,19 +103,22 @@ class Session(BaseSession):
         
         helper = GeomatchHelper(browser=self.browser)
         self._handle_potential_popups()
-
+        # TODO: refactor this entire mess of GeomatchHelper
         name = helper.get_name()
         age = helper.get_age()
 
-        bio, passions, lifestyle, basics, anthem, looking_for = helper.get_bio_and_passions()
+        bio, _, _, _, anthem, looking_for = helper.get_bio_and_passions()
         images = helper.get_images()
         instagram = helper.get_insta(bio)
         rowdata = helper.get_row_data()
         work = rowdata.get('work')
-        study = rowdata.get('study')
+        study = rowdata.get('education')
         home = rowdata.get('home')
         distance = rowdata.get('distance')
         gender = rowdata.get('gender')
+        passions = " ".join(rowdata['interests'])
+        lifestyle = f"smoking: {rowdata.get('smoking')}\ndrinking: {rowdata.get('drinking')}\nworkout: {rowdata.get('workout')}"
+        basics = f"zodiac: {rowdata.get('zodiac')}"
 
         return Geomatch(name=name, age=age, work=work, gender=gender, study=study, home=home, distance=distance,
                         bio=bio, passions=passions, lifestyle=lifestyle, basics=basics, anthem=anthem, looking_for=looking_for, instagram=instagram, images=images)

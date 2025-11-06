@@ -85,6 +85,7 @@ if __name__ == "__main__":
         # store this data locally as json with reference to their respective (locally stored) images
         # session.store_local(geomatch)
         # Use the dating agent to decide whether to like or dislike this profile
+        print("running dating LLM query...")
         decision_json = run_dating_agent(chain, geomatch)
         
         print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
@@ -92,6 +93,6 @@ if __name__ == "__main__":
             session.like()
         else:
             session.dislike()
-        # input("Press Enter to continue...")
+        input("Press Enter to continue...")
         # dislike the profile, so it will show us the next geomatch (since we got infinite amount of dislikes anyway)
         # session.like()

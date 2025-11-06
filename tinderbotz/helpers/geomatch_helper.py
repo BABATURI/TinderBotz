@@ -11,45 +11,27 @@ from datetime import datetime
 
 
 class GeomatchHelper:
-	delay = 5
-
+	DELAY = 5
 	HOME_URL = "https://www.tinder.com/app/recs"
+	NAME_XPATH = '//*[@id="main-content"]/div[1]/div/div/div/div[1]/div[1]/div[1]/div/div/h1/span[1]'
 
 	def __init__(self, browser):
 		self.browser = browser
 		self.opened_profile = False
 		if "/app/recs" not in self.browser.current_url:
 			self._get_home_page()
+   
+		# TODO: sync geomatch state
+		try:
+			WebDriverWait(self.browser, 20.0).until(EC.presence_of_element_located(
+					(By.XPATH, "//div[@class='Bdrs(8px) Bgz(cv) Bgp(c) StretchedBox']")))
+		except:
+			pass
 
 	def like(self) -> bool:
 		try:
-			# need to find better way
-			# if 'profile' in self.browser.current_url:
-			#    xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]/div[2]/div/div/div[4]/button'
-
-			# wait for element to appear
-			#    WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-			#        (By.XPATH, xpath)))
-
-			# locate like button
-			#    like_button = self.browser.find_element(By.XPATH, xpath)
-
-			#    like_button.click()
-
-			# else:
-			#    xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]'
-
-			#    WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-			#        (By.XPATH, xpath)))
-
-			#   card = self.browser.find_element(By.XPATH, xpath)
-
-			#    action = ActionChains(self.browser)
-			#    action.drag_and_drop_by_offset(card, 200, 0).perform()
-
 			action = ActionChains(self.browser)
 			action.send_keys(Keys.ARROW_RIGHT).perform()
-			# time.sleep(1)
 			return True
 
 		except (TimeoutException, ElementClickInterceptedException):
@@ -59,27 +41,6 @@ class GeomatchHelper:
 
 	def dislike(self):
 		try:
-			# if 'profile' in self.browser.current_url:
-			#    xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]/div[2]/div/div/div[2]/button'
-			# wait for element to appear
-			#    WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-			#        (By.XPATH, xpath)))
-
-			#    dislike_button = self.browser.find_element(By.XPATH, xpath)
-
-			#    dislike_button.click()
-			# else:
-
-			#    xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]'
-
-			#    WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-			#        (By.XPATH, xpath)))
-
-			#    card = self.browser.find_element(By.XPATH, xpath)
-
-			#    action = ActionChains(self.browser)
-			#    action.drag_and_drop_by_offset(card, -200, 0).perform()
-
 			action = ActionChains(self.browser)
 			action.send_keys(Keys.ARROW_LEFT).perform()
 
@@ -93,7 +54,7 @@ class GeomatchHelper:
 				xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]/div[2]/div/div/div[3]/div/div/div/button'
 
 				# wait for element to appear
-				WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
+				WebDriverWait(self.browser, self.DELAY).until(EC.presence_of_element_located(
 					(By.XPATH, xpath)))
 
 				superlike_button = self.browser.find_element(By.XPATH, xpath)
@@ -103,7 +64,7 @@ class GeomatchHelper:
 			else:
 				xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]'
 
-				WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
+				WebDriverWait(self.browser, self.DELAY).until(EC.presence_of_element_located(
 					(By.XPATH, xpath)))
 
 				card = self.browser.find_element(By.XPATH, xpath)
@@ -117,16 +78,11 @@ class GeomatchHelper:
 			self._get_home_page()
    
 	def _close_profile(self, second_try=False):
-		if self._is_profile_opened():
-			return
-
 		action = ActionChains(self.browser)
 		action.send_keys(Keys.ARROW_DOWN).perform()
 		self.opened_profile = False
    
 	def _open_profile(self, second_try=False):
-		if self._is_profile_opened():
-			return
 		try:
 			action = ActionChains(self.browser)
 			action.send_keys(Keys.ARROW_UP).perform()
@@ -147,24 +103,22 @@ class GeomatchHelper:
 				self._open_profile(second_try=True)
 
 	def get_name(self):
-		if not self._is_profile_opened():
-			self._open_profile()
+		self._open_profile()
 
 		try:
 			xpath = '//*[@id="main-content"]/div[1]/div/div/div/div[1]/div[1]/div[1]/div/div/h1/span[1]'
 			# wait for element to appear
-			WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
-				(By.XPATH, xpath)))
+			WebDriverWait(self.browser, self.DELAY).until(EC.presence_of_element_located(
+				(By.XPATH, self.NAME_XPATH)))
 
-			element = self.browser.find_element(By.XPATH, xpath)
-
+			element = self.browser.find_element(By.XPATH, self.NAME_XPATH)
+			
 			return element.text
 		except Exception as e:
-			pass
+			return None
 
 	def get_age(self):
-		if not self._is_profile_opened():
-			self._open_profile()
+		self._open_profile()
 
 		age = None
 
@@ -172,7 +126,7 @@ class GeomatchHelper:
 			xpath = f'//*[@id="main-content"]/div[1]/div/div/div/div[1]/div[1]/div[1]/div/div/h1/span[2]'
 
 			# wait for element to appear
-			WebDriverWait(self.browser, self.delay).until(EC.presence_of_element_located(
+			WebDriverWait(self.browser, self.DELAY).until(EC.presence_of_element_located(
 				(By.XPATH, xpath)))
 
 			element = self.browser.find_element(By.XPATH, xpath)
@@ -180,78 +134,87 @@ class GeomatchHelper:
 				age = int(element.text)
 			except ValueError:
 				age = None
-
 		except:
 			pass
 
+		
 		return age
 
 	def is_verified(self):
-		if not self._is_profile_opened():
-			self._open_profile()
-
+		self._open_profile()
+		found = False
 		xpath_badge = f'{content}/div/div[1]/div/main/div[1]/div/div/div[1]/div[1]/div/div[2]/div[1]/div/div[1]/div[2]'
 		try:
 			self.browser.find_element(By.XPATH, xpath_badge)
-			return True
-
+			found = True
 		except:
-			return False
+			pass
+		return found
 
-	_WORK_SVG_PATH = "M7.15 3.434h5.7V1.452a.728.728 0 0 0-.724-.732H7.874a.737.737 0 0 0-.725.732v1.982z"
+	_WORK_SVG = "M7.15 3.434h5.7V1.452a.728.728 0 0 0-.724-.732H7.874a.737.737 0 0 0-.725.732v1.982z"
 	_STUDYING_SVG_PATH = "M11.87 5.026L2.186 9.242c-.25.116-.25.589 0 .705l.474.204v2.622a.78.78 0 0 0-.344.657c0 .42.313.767.69.767.378 0 .692-.348.692-.767a.78.78 0 0 0-.345-.657v-2.322l2.097.921a.42.42 0 0 0-.022.144v3.83c0 .45.27.801.626 1.101.358.302.842.572 1.428.804 1.172.46 2.755.776 4.516.776 1.763 0 3.346-.317 4.518-.777.586-.23 1.07-.501 1.428-.803.355-.3.626-.65.626-1.1v-3.83a.456.456 0 0 0-.022-.145l3.264-1.425c.25-.116.25-.59 0-.705L12.13 5.025c-.082-.046-.22-.017-.26 0v.001zm.13.767l8.743 3.804L12 13.392 3.257 9.599l8.742-3.806zm-5.88 5.865l5.75 2.502a.319.319 0 0 0 .26 0l5.75-2.502v3.687c0 .077-.087.262-.358.491-.372.29-.788.52-1.232.68-1.078.426-2.604.743-4.29.743s-3.212-.317-4.29-.742c-.444-.161-.86-.39-1.232-.68-.273-.23-.358-.415-.358-.492v-3.687z"
 	_HOME_SVG_PATH = "M19.695 9.518H4.427V21.15h15.268V9.52zM3.109 9.482h17.933L12.06 3.709 3.11 9.482z"
 	_LOCATION_SVG_PATH = "M11.436 21.17l-.185-.165a35.36 35.36 0 0 1-3.615-3.801C5.222 14.244 4 11.658 4 9.524 4 5.305 7.267 2 11.436 2c4.168 0 7.437 3.305 7.437 7.524 0 4.903-6.953 11.214-7.237 11.48l-.2.167zm0-18.683c-3.869 0-6.9 3.091-6.9 7.037 0 4.401 5.771 9.927 6.897 10.972 1.12-1.054 6.902-6.694 6.902-10.95.001-3.968-3.03-7.059-6.9-7.059h.001z"
-	_LOCATION_SVG_PATH_2 = "M11.445 12.5a2.945 2.945 0 0 1-2.721-1.855 3.04 3.04 0 0 1 .641-3.269 2.905 2.905 0 0 1 3.213-.645 3.003 3.003 0 0 1 1.813 2.776c-.006 1.653-1.322 2.991-2.946 2.993zm0-5.544c-1.378 0-2.496 1.139-2.498 2.542 0 1.404 1.115 2.544 2.495 2.546a2.52 2.52 0 0 0 2.502-2.535 2.527 2.527 0 0 0-2.499-2.545v-.008z"
+	_DISTANCE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" focusable="false" role="img" class="Va(tt) Sq(16px)"><title></title><g fill="var(--color--icon-secondary, inherit)"><path fill-rule="evenodd" d="M12.301 23.755c.746-.659 9.449-8.339 9.449-14.337C21.75 4.138 17.463 0 11.998 0 6.534 0 2.25 4.138 2.25 9.418c0 2.675 1.602 5.91 4.769 9.616a45.204 45.204 0 0 0 4.737 4.759l.246.207.26-.21zm-.305-2.424c.94-.889 2.376-2.32 3.77-4.011 1.084-1.315 2.105-2.741 2.847-4.152.753-1.433 1.142-2.705 1.142-3.75 0-4.113-3.328-7.423-7.757-7.423-4.428 0-7.753 3.309-7.753 7.423 0 1.941 1.208 4.713 4.29 8.319a42.901 42.901 0 0 0 3.461 3.594" clip-rule="evenodd"></path><path fill-rule="evenodd" d="M12 6.998a2.002 2.002 0 1 0 0 4.004 2.002 2.002 0 0 0 0-4.005M8.002 9a3.997 3.997 0 1 1 7.995 0 3.997 3.997 0 0 1-7.994 0" clip-rule="evenodd"></path></g></svg>'
 	_GENDER_SVG_PATH = "M15.507 13.032c1.14-.952 1.862-2.656 1.862-5.592C17.37 4.436 14.9 2 11.855 2 8.81 2 6.34 4.436 6.34 7.44c0 3.07.786 4.8 2.02 5.726-2.586 1.768-5.054 4.62-4.18 6.204 1.88 3.406 14.28 3.606 15.726 0 .686-1.71-1.828-4.608-4.4-6.338"
-
+	_HEIGHT_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" focusable="false" role="img" class="Va(tt) Sq(16px)"><title></title><g fill="var(--color--icon-secondary, inherit)"><path fill-rule="evenodd" d="M16.95 0a1 1 0 0 1 .707.293l6.05 6.05a1 1 0 0 1 0 1.414l-15.95 15.95a1 1 0 0 1-1.414 0l-6.05-6.05a1 1 0 0 1 0-1.414L16.243.293A1 1 0 0 1 16.95 0M2.414 16.95l4.636 4.636 1.116-1.116-2.318-2.318a1 1 0 1 1 1.414-1.414l2.318 2.317 1.308-1.308-1.15-1.15a1 1 0 1 1 1.414-1.415l1.15 1.151 1.309-1.308-2.318-2.318a1 1 0 0 1 1.414-1.414l2.318 2.318 1.308-1.308-1.151-1.152a1 1 0 0 1 1.414-1.414l1.151 1.151 1.308-1.308-2.317-2.318a1 1 0 0 1 1.414-1.414l2.318 2.318 1.116-1.116-4.636-4.636z" clip-rule="evenodd"></path></g></svg>'
+	_SVG_MAP = {
+		_HEIGHT_SVG: "height",
+		_DISTANCE_SVG: "distance",
+		_WORK_SVG: "work",
+	}
 	def get_row_data(self):
-		title_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div/div/div[2]/h2'
-		content_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div/div/div[3]'
-		acc_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div'
-		
+		rowdata = {
+			"interests": []
+		}
+		# return rowdata
+		self._open_profile()
     	# iterate this content to find items
-		if not self._is_profile_opened():
-			pass
-		else:
-			self._close_profile()
 
-		div = self.browser.find_element(By.XPATH, acc_xpath)
-		# if has in it /div[2]/div[2]/div[2], we found distance...
-		return
-		rowdata = {}
-
-		xpath = '//div[@class="Row"]'
-		rows = self.browser.find_elements(By.XPATH, xpath)
-
-		for row in rows:
-			svg = row.find_element(By.XPATH, ".//*[starts-with(@d, 'M')]").get_attribute('d')
-			value = row.find_element(By.XPATH, ".//div[2]").text
-			if svg == self._WORK_SVG_PATH:
-				rowdata['work'] = value
-			if svg == self._STUDYING_SVG_PATH:
-				rowdata['study'] = value
-			if svg == self._HOME_SVG_PATH:
-				rowdata['home'] = value.split(' ')[-1]
-			if svg == self._GENDER_SVG_PATH:
-				rowdata['gender'] = value
-			if svg == self._LOCATION_SVG_PATH or svg == self._LOCATION_SVG_PATH_2:
-				distance = value.split(' ')[0]
-				try:
-					distance = int(distance)
-				except TypeError:
-					# Means the text has a value of 'Less than 1 km away'
-					distance = 1
-				except ValueError:
-					distance = None
-
-				rowdata['distance'] = distance
+		list_items = self.browser.find_elements(By.TAG_NAME, "li")
+		for li in list_items:
+			if li.text == '':
+				continue
+			# check for messages
+			if len(li.find_elements(By.TAG_NAME, 'a')) > 0:
+				continue
+			print(li.text)
+			# special case for interests:
+			try:
+				interest = li.find_element(By.XPATH, ".//div/span")
+				rowdata["interests"].append(interest.text)
+				continue
+			except:
+				pass
+			# special case for q&a
+			try:
+				q = li.find_element(By.TAG_NAME, "h3").text.lower()
+				if q == "How often do you smoke?".lower():
+					q = "smoking"
+				a = li.find_element(By.XPATH, ".//div/div/div[2]").text
+				rowdata[q] = a
+				continue
+			except:
+				pass
+			# else, essentials
+			svg = li.find_elements(By.TAG_NAME, "svg")
+			if len(svg) != 1:
+				continue
+			svg_val = svg[0].get_attribute('outerHTML')
+			value = li.find_element(By.XPATH, ".//div/div/div").text
+			
+			if self._SVG_MAP.get(svg_val, None) != None:
+				category = self._SVG_MAP.get(svg_val)
+				rowdata[category] = value
+			
+				if category == "distance":
+					distance = value.replace("kilometres away", "km")
+					rowdata['distance'] = distance
 
 		return rowdata
 
 	def get_bio_and_passions(self):
-		if not self._is_profile_opened():
-			self._open_profile()
+		self._open_profile()
 
 		bio = None
 		looking_for = None
@@ -267,51 +230,16 @@ class GeomatchHelper:
 		lifestyle = []
 
 		# Bio
-		bio_xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div/div/div[2]/div[2]/button/div/div/div/div[2]/div[2]'
 		try:
-			self._close_profile()
-			bio = self.browser.find_element(By.XPATH, bio_xpath).text
-			self._open_profile()
+			bio = self.browser.find_element(By.XPATH, "//div[@class='C($c-ds-text-primary) Typs(body-1-regular)']").text
 		except Exception as e:
 			pass
 
 		# Looking for
 		try:
-			xpath = r'/html/body/div[1]/div/div[1]/div/main/div[1]/div/div/div/div[1]/div[1]/div[2]/div[2]/div/div[1]/div/div[2]/span[2]'
-			looking_for = self.browser.find_element(By.XPATH,
-			                                          xpath).text
+			xpath = "//span[@class='Typs(display-3-strong) C($c-ds-text-primary) Mstart(4px)']"
+			looking_for = self.browser.find_element(By.XPATH, xpath).text
 
-		except Exception as e:
-			pass
-
-		# Basics, Lifestyle and Passions
-		try:
-			sections = self.browser.find_elements(By.CSS_SELECTOR, "div[class='Px(16px) Py(12px)']")
-			for section in sections:
-				headline = section.find_element(By.TAG_NAME, "h2").text.lower()
-
-				if headline in infoItems.keys():
-					infoElements = section.find_elements(By.CSS_SELECTOR,
-					                                     "div[class^='Bdrs(100px)']")
-					for infoElement in infoElements:
-						infoItems[headline].append(infoElement.text)
-				elif headline == 'my anthem':
-					song = section.find_element(By.CSS_SELECTOR,
-					                            "div[class$='C($c-ds-text-primary)']").text
-					artist = section.find_element(By.CSS_SELECTOR,
-					                              "div[class$='C($c-ds-text-secondary)']").text
-					anthem = {
-						"song": song,
-						"artist": artist
-					}
-				else:
-					print("Unknown Sect Headline:", headline)
-
-		# if ('Passions' in passions_el.find_element(By.TAG_NAME, "h2").text):
-		#    #print("Passions Text", passions_el.text)
-		#    elements = passions_el.find_element(By.TAG_NAME, 'div').find_element(By.TAG_NAME, 'div').find_elements(By.TAG_NAME, 'div')
-		#    for el in elements:
-		#        passions.append(el.text)
 		except Exception as e:
 			pass
 
@@ -319,8 +247,7 @@ class GeomatchHelper:
 			"basics"], anthem, looking_for
 
 	def get_images(self):
-		if not self._is_profile_opened():
-			self._open_profile()
+		self._open_profile()
 
 		images = []
 		idx = 0
@@ -422,7 +349,7 @@ class GeomatchHelper:
 
 	def _get_home_page(self):
 		self.browser.get(self.HOME_URL)
-		time.sleep(5)
+		time.sleep(10)
 
 
 	def _is_profile_opened(self):

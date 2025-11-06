@@ -1,0 +1,2 @@
+- sync issues when opening the app
+- sync issues wehn moving through profiles (need to wait somehow)
