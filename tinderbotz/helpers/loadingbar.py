@@ -1,16 +1,18 @@
 import sys
 import time
+from typing import Optional
+
 
 class LoadingBar:
 
-    def __init__(self, length_of_loop, explanation="", amount_of_bars=30):
+    def __init__(self, length_of_loop: int, explanation: str = "", amount_of_bars: int = 30) -> None:
 
-        self.length_of_loop = length_of_loop
-        self.explanation = explanation
-        self.amount_of_bars = amount_of_bars
+        self.length_of_loop: int = length_of_loop
+        self.explanation: str = explanation
+        self.amount_of_bars: int = amount_of_bars
         self.update_loading(index=-1)
 
-    def update_loading(self, index):
+    def update_loading(self, index: int) -> None:
         sys.stdout.write('\r')
 
         # To avoid dividing by Zero, let's do a check

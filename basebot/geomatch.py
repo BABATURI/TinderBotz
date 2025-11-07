@@ -2,86 +2,99 @@ import json
 import os
 import random
 import string
-from typing import List
+from typing import Any, Dict, List, Optional
 
 
-def _id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+def _id_generator(size: int = 6, chars: str = string.ascii_uppercase + string.digits) -> str:
 	return ''.join(random.choice(chars) for _ in range(size))
 
 
 class Geomatch:
+	def __init__(
+		self,
+		name: str,
+		age: Optional[int],
+		work: Optional[str],
+		study: Optional[str],
+		home: Optional[str],
+		gender: str,
+		bio: Optional[str],
+		lifestyle: Optional[Dict[str, Any]],
+		basics: Optional[Dict[str, Any]],
+		anthem: Optional[str],
+		looking_for: Optional[str] = None,
+		distance: Optional[float] = None,
+		passions: Optional[List[str]] = None,
+		instagram: Optional[str] = None,
+		images: Optional[List[str]] = None,
+	) -> None:
+		self.name: str = name
+		self.age: Optional[int] = age
+		self.work: Optional[str] = work
+		self.study: Optional[str] = study
+		self.home: Optional[str] = home
+		self.gender: str = gender
+		self.passions: Optional[List[str]] = passions
+		self.bio: Optional[str] = bio
+		self.lifestyle: Optional[Dict[str, Any]] = lifestyle
+		self.basics: Optional[Dict[str, Any]] = basics
+		self.anthem: Optional[str] = anthem
+		self.looking_for: Optional[str] = looking_for
+		self.distance: Optional[float] = distance
+		self.images: List[str] = images or []
+		self.instagram: Optional[str] = instagram
+		self.prompts: List[Any] = []
+		self.listening: List[Any] = []
 
-	def __init__(self, name, age, work, study, home, gender, bio, lifestyle, basics, anthem,
-	             looking_for=None, distance=None, passions=None, instagram=None,
-	             images: List[str] = []):
-		self.name = name
-		self.age = age
-		self.work = work
-		self.study = study
-		self.home = home
-		self.gender = gender
-		self.passions = passions
-		self.bio = bio
-		self.lifestyle = lifestyle
-		self.basics = basics
-		self.anthem = anthem
-		self.looking_for = looking_for
-		self.distance = distance
-		self.images: List[str] = images
-		self.instagram = instagram
-		self.prompts = []
-		self.listening = []
+		self.id: str = "{}{}_{}".format(name, age, _id_generator(size=4))
 
-		# create a unique id for this person
-		self.id = "{}{}_{}".format(name, age, _id_generator(size=4))
-
-	def get_name(self):
+	def get_name(self) -> str:
 		return self.name
 
-	def get_age(self):
+	def get_age(self) -> Optional[int]:
 		return self.age
 
-	def get_work(self):
+	def get_work(self) -> Optional[str]:
 		return self.work
 
-	def get_study(self):
+	def get_study(self) -> Optional[str]:
 		return self.study
 
-	def get_home(self):
+	def get_home(self) -> Optional[str]:
 		return self.home
 
-	def get_gender(self):
+	def get_gender(self) -> str:
 		return self.gender
 
-	def get_passions(self):
+	def get_passions(self) -> Optional[List[str]]:
 		return self.passions
 
-	def get_bio(self):
+	def get_bio(self) -> Optional[str]:
 		return self.bio
 
-	def get_lifestyle(self):
+	def get_lifestyle(self) -> Optional[Dict[str, Any]]:
 		return self.lifestyle
 
-	def get_basics(self):
+	def get_basics(self) -> Optional[Dict[str, Any]]:
 		return self.basics
 
-	def get_anthem(self):
+	def get_anthem(self) -> Optional[str]:
 		return self.anthem
 
-	def get_looking_for(self):
+	def get_looking_for(self) -> Optional[str]:
 		return self.looking_for
 
-	def get_distance(self):
+	def get_distance(self) -> Optional[float]:
 		return self.distance
 
-	def get_instagram(self):
+	def get_instagram(self) -> Optional[str]:
 		return self.instagram
 
-	def get_id(self):
+	def get_id(self) -> str:
 		return self.id
 
-	def get_dictionary(self):
-		data = {
+	def get_dictionary(self) -> Dict[str, Any]:
+		data: Dict[str, Any] = {
 			"name": self.get_name(),
 			"age": self.get_age(),
 			"work": self.get_work(),
@@ -100,14 +113,14 @@ class Geomatch:
 		}
 		return data
 
-	def store_json(self, directory, filename):
+	def store_json(self, directory: str, filename: str) -> None:
 		if not os.path.exists(directory):
 			os.makedirs(directory)
 
-		filepath = os.path.join(directory, "{}.json".format(filename))
+		filepath: str = os.path.join(directory, f"{filename}.json")
 		try:
 			with open(filepath, "r", encoding='utf-8') as fp:
-				data = json.load(fp)
+				data: Dict[str, Any] = json.load(fp)
 		except IOError:
 			print("Could not read file, starting from scratch")
 			data = {}
