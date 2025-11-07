@@ -4,8 +4,6 @@ from typing import Any
 
 
 class EmailHelper:
-
-    # I created a gmail account for everyone to use, please don't abuse this.
     @staticmethod
     def send_mail_match_found(to: str) -> None:
         match_msg: str = "Congratulations you've been matched with someone. Please check your profile for more details."

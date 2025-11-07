@@ -44,14 +44,10 @@ session = Session()
 **Optional parameters**</br>
 `headless`: *boolean*</br>
 `store_session`: *boolean*</br>
-`proxy`: *string*</br>
 
 **Example usage**</br>
 ***headless*** might not work properly, so recommended to leave it on False. </br>
 ***store_session*** will store your cookies in a directory, so next time you don't need to login again. </br>
-***proxy*** can be added using IP:PORT or HOST:PORT </br>
-```
-session = Session(headless=False, store_session=True, proxy="23.23.23.23:3128") 
 ```
 
 ## Logging in to Tinder

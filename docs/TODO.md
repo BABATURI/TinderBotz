@@ -1,0 +1,3 @@
+- make sure all the info goes to the bot
+- handle the case where no one is left in the tinder queue
+- make the bot work in specific times- and close the browser now and then

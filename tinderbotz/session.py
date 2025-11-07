@@ -24,10 +24,9 @@ from tinderbotz.helpers.xpaths import *
 class Session(BaseSession):
 	HOME_URL = "https://www.tinder.com/app/recs"
 	app_name = "tinder"
-	app_url = "https://tinder.com/app/recs"
 	app_logged_in_match = "tinder.com/app"
 
-	def __init__(self, headless=False, store_session=True, proxy=None, user_data=False):
+	def __init__(self, headless=False, store_session=True, user_data=False):
 		self.email = None
 		self.may_send_email = False
 		self.session_data = {
@@ -38,6 +37,11 @@ class Session(BaseSession):
 		}
 
 		super().__init__(headless, store_session, user_data)
+
+	@property
+	def app_url(self) -> str:
+		return "https://tinder.com/app/recs"
+
 
 	# This will send notification when you get a match to your email used to logged in.
 	def set_email_notifications(self, boolean):
@@ -99,9 +103,9 @@ class Session(BaseSession):
 		age = helper.get_age()
 
 		bio, _, _, _, anthem, looking_for = helper.get_bio_and_passions()
-		images = helper.get_images()
+		images = helper.get_image_urls()
 		instagram = helper.get_insta(bio)
-		rowdata = {'interests': []}
+		rowdata = helper.get_row_data()
 		work = rowdata.get('work')
 		study = rowdata.get('education')
 		home = rowdata.get('home')

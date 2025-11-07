@@ -4,9 +4,21 @@ from tinderbotz.helpers.storage_helper import StorageHelper
 
 
 class Geomatch:
-
-	def __init__(self, name, age, work, study, home, gender, bio, lifestyle, basics, anthem,
-	             looking_for=None, distance=None, passions=None, instagram=None,
+	def __init__(self,
+	             name,
+	             age,
+	             work,
+	             study,
+	             home,
+	             gender,
+	             bio,
+	             lifestyle,
+	             basics,
+	             anthem,
+	             looking_for=None,
+	             distance=None,
+	             passions=None,
+	             instagram=None,
 	             images: List[bytes] = None):
 		self.name = name
 		self.age = age

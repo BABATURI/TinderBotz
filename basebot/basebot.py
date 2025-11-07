@@ -27,8 +27,6 @@ class BaseSession:
 		# self.app_url and self.app_name must be set by children
 		self.lower_sleep_time = 1.0
 		self.upper_sleep_time = 3.0
-		if not hasattr(self, "app_url") or not hasattr(self, "app_name"):
-			raise ValueError("self.app_url is not set")
 
 		start_session = time.time()
 
@@ -84,7 +82,7 @@ class BaseSession:
 		# Getting the chromedriver from cache or download it from internet
 		print("Getting ChromeDriver ...")
 		try:
-			self.browser = uc.Chrome(options=options)  # ChromeDriverManager().install(),
+			self.browser: uc.Chrome = uc.Chrome(options=options)  # ChromeDriverManager().install(),
 		except Exception as e:
 			print(str(e))
 			print("maybe you should update chrome")
@@ -97,7 +95,10 @@ class BaseSession:
 		print("Started session: {}\n\n".format(self.started))
 		self.browser.get(self.app_url)
 
-	# Setting a custom location
+	@property
+	def app_url(self) -> str:
+		raise NotImplementedError()
+
 	def set_custom_location(self, latitude, longitude, accuracy="100%"):
 
 		params = {
