@@ -2,6 +2,7 @@
 # from webdriver_manager.chrome import ChromeDriverManager
 # some other imports :-)
 import time
+from typing import Optional, List, Union
 
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, \
 	ElementNotVisibleException
@@ -22,14 +23,14 @@ from tinderbotz.helpers.xpaths import *
 
 
 class Session(BaseSession):
-	HOME_URL = "https://www.tinder.com/app/recs"
-	app_name = "tinder"
-	app_logged_in_match = "tinder.com/app"
+	HOME_URL: str = "https://www.tinder.com/app/recs"
+	app_name: str = "tinder"
+	app_logged_in_match: str = "tinder.com/app"
 
-	def __init__(self, headless=False, store_session=True, user_data=False):
-		self.email = None
-		self.may_send_email = False
-		self.session_data = {
+	def __init__(self, headless: bool = False, store_session: bool = True, user_data: bool = False) -> None:
+		self.email: Optional[str] = None
+		self.may_send_email: bool = False
+		self.session_data: dict[str, int] = {
 			"duration": 0,
 			"like": 0,
 			"dislike": 0,
@@ -42,44 +43,43 @@ class Session(BaseSession):
 	def app_url(self) -> str:
 		return "https://tinder.com/app/recs"
 
-
 	# This will send notification when you get a match to your email used to logged in.
-	def set_email_notifications(self, boolean):
+	def set_email_notifications(self, boolean: bool) -> None:
 		self.may_send_email = boolean
 
-	def set_distance_range(self, km):
+	def set_distance_range(self, km: int) -> None:
 		assert self._is_logged_in()
 
 		helper = PreferencesHelper(browser=self.browser)
 		helper.set_distance_range(km)
 
-	def set_age_range(self, min, max):
+	def set_age_range(self, min: int, max: int) -> None:
 		assert self._is_logged_in()
 
 		helper = PreferencesHelper(browser=self.browser)
 		helper.set_age_range(min, max)
 
-	def set_sexuality(self, type):
+	def set_sexuality(self, type: str) -> None:
 		assert self._is_logged_in()
 
 		helper = PreferencesHelper(browser=self.browser)
 		helper.set_sexualitiy(type)
 
-	def set_global(self, boolean):
+	def set_global(self, boolean: bool) -> None:
 		assert self._is_logged_in()
 
 		helper = PreferencesHelper(browser=self.browser)
 		helper.set_global(boolean)
 
-	def set_bio(self, bio):
+	def set_bio(self, bio: str) -> None:
 		helper = ProfileHelper(browser=self.browser)
 		helper.set_bio(bio)
 
-	def add_photo(self, filepath):
+	def add_photo(self, filepath: str) -> None:
 		helper = ProfileHelper(browser=self.browser)
 		helper.add_photo(filepath)
 
-	def _is_logged_in(self):
+	def _is_logged_in(self) -> bool:
 		# make sure tinder website is loaded for the first time
 		if not self.app_logged_in_match in self.browser.current_url:
 			# enforce english language
@@ -92,85 +92,101 @@ class Session(BaseSession):
 			print("User is not logged in yet.\n")
 			return False
 
-	def get_geomatch(self, quickload=True):
+	def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
 		if not self._is_logged_in():
-			return
+			return None
 
-		helper = GeomatchHelper(browser=self.browser)
+		helper: GeomatchHelper = GeomatchHelper(browser=self.browser)
 		self._handle_potential_popups()
 		# TODO: refactor this entire mess of GeomatchHelper
-		name = helper.get_name()
-		age = helper.get_age()
+		name: Optional[str] = helper.get_name()
+		age: Optional[int] = helper.get_age()
 
 		bio, _, _, _, anthem, looking_for = helper.get_bio_and_passions()
-		images = helper.get_image_urls()
-		instagram = helper.get_insta(bio)
-		rowdata = helper.get_row_data()
-		work = rowdata.get('work')
-		study = rowdata.get('education')
-		home = rowdata.get('home')
-		distance = rowdata.get('distance')
-		gender = rowdata.get('gender')
-		passions = " ".join(rowdata['interests'])
-		lifestyle = f"smoking: {rowdata.get('smoking')}\ndrinking: {rowdata.get('drinking')}\nworkout: {rowdata.get('workout')}"
-		basics = f"zodiac: {rowdata.get('zodiac')}"
+		images: List[str] = helper.get_image_urls()
+		instagram: Optional[str] = helper.get_insta(bio)
+		rowdata: dict = helper.get_row_data()
+		work: Optional[str] = rowdata.get('work')
+		study: Optional[str] = rowdata.get('education')
+		home: Optional[str] = rowdata.get('home')
+		distance: Optional[str] = rowdata.get('distance')
+		gender: Optional[str] = rowdata.get('gender')
+		passions: str = " ".join(rowdata['interests'])
+		lifestyle: str = f"smoking: {rowdata.get('smoking')}\ndrinking: {rowdata.get('drinking')}\nworkout: {rowdata.get('workout')}"
+		basics: str = f"zodiac: {rowdata.get('zodiac')}"
 
-		return Geomatch(name=name, age=age, work=work, gender=gender, study=study, home=home,
-		                distance=distance,
-		                bio=bio, passions=passions, lifestyle=lifestyle, basics=basics,
-		                anthem=anthem, looking_for=looking_for, instagram=instagram, images=images)
+		return Geomatch(
+			name=name,
+			age=age,
+			work=work,
+			gender=gender,
+			study=study,
+			home=home,
+			distance=distance,
+			bio=bio,
+			passions=passions,
+			lifestyle=lifestyle,
+			basics=basics,
+			anthem=anthem,
+			looking_for=looking_for,
+			instagram=instagram,
+			images=images
+		)
 
-	def get_chat_ids(self, new=True, messaged=True):
+	def get_chat_ids(self, new: bool = True, messaged: bool = True) -> Optional[List[str]]:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			return helper.get_chat_ids(new, messaged)
+		return None
 
-	def get_new_matches(self, amount=100000, quickload=True):
+	def get_new_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			return helper.get_new_matches(amount, quickload)
+		return None
 
-	def get_messaged_matches(self, amount=100000, quickload=True):
+	def get_messaged_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			return helper.get_messaged_matches(amount, quickload)
+		return None
 
-	def send_message(self, chatid, message):
+	def send_message(self, chatid: str, message: str) -> None:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			helper.send_message(chatid, message)
 
-	def send_gif(self, chatid, gifname):
+	def send_gif(self, chatid: str, gifname: str) -> None:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			helper.send_gif(chatid, gifname)
 
-	def send_song(self, chatid, songname):
+	def send_song(self, chatid: str, songname: str) -> None:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			helper.send_song(chatid, songname)
 
-	def send_socials(self, chatid, media):
+	def send_socials(self, chatid: str, media: str) -> None:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			helper.send_socials(chatid, media)
 
-	def unmatch(self, chatid):
+	def unmatch(self, chatid: str) -> None:
 		if self._is_logged_in():
-			helper = MatchHelper(browser=self.browser)
+			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
 			helper.unmatch(chatid)
 
 	# Utilities
-	def _handle_potential_popups(self):
-		delay = 0.25
+	def _handle_potential_popups(self) -> Optional[str]:
+		delay: float = 0.25
 
 		# last possible id based div
 		base_element = self.browser.find_element(By.XPATH, modal_manager)
@@ -220,7 +236,7 @@ class Session(BaseSession):
 			pass
 
 		# try to dismiss match
-		matched = False
+		matched: bool = False
 		try:
 			xpath = '//button[@title="Back to Tinder"]'
 
@@ -286,16 +302,3 @@ class Session(BaseSession):
 			pass
 
 		return None
-
-# def _is_logged_in(self):
-#     # make sure tinder website is loaded for the first time
-#     if not "tinder" in self.browser.current_url:
-#         # enforce english language
-#         self.browser.get("https://tinder.com/?lang=en")
-#         time.sleep(1.5)
-
-#     if "tinder.com/app/" in self.browser.current_url:
-#         return True
-#     else:
-#         print("User is not logged in yet.\n")
-#         return False
