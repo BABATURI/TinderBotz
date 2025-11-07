@@ -8,3 +8,7 @@ from tinderbotz.helpers.geomatch import Geomatch
 @dataclass
 class Match(Geomatch):
 	chatid: Optional[str] = None
+
+	@property
+	def match_type(self) -> str:
+		return "match"

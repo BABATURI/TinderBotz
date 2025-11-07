@@ -12,6 +12,7 @@ from selenium.webdriver.common.keys import Keys
 from tinderbotz.helpers.constants_helper import Printouts
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.match import Match
+from tinderbotz.helpers.storage_helper import StorageHelper
 
 BOT_NAME = "BaseBot"
 
@@ -123,23 +124,9 @@ class BaseSession:
 	def _is_logged_in(self):
 		raise NotImplementedError()
 
-	def store_local(self, match):
-		# TODO: storing images is broken, need to fix it later
-		if isinstance(match, Match):
-			filename = 'matches'
-		elif isinstance(match, Geomatch):
-			filename = 'geomatches'
-		else:
-			print("type of match is unknown, storing local impossible")
-			print("Crashing in 3.2.1... :)")
-			assert False
-
-		# store its images - nah we save space
-		# for image in match.images:
-		#     StorageHelper.store_image_as_url(image=image, directory='data/{}/images'.format(filename))
-
-		# store its userdata
-		match.store_json(directory=os.path.join("data", filename), filename=filename)
+	def store_local(self, match: Geomatch):
+		filename: str = match.match_type
+		StorageHelper.store_match(match, directory=os.path.join("data", filename), filename=filename)
 
 	def like(self, randomize_sleep=True):
 		# base option, can be overwritten

@@ -37,7 +37,7 @@ def main() -> None:
 		# get profile data (name, age, bio, images, ...)
 		geomatch = session.get_geomatch(quickload=False)
 		# store this data locally as json with reference to their respective (locally stored) images
-		# session.store_local(geomatch)
+		session.store_local(geomatch)
 		# Use the dating agent to decide whether to like or dislike this profile
 		print("running dating LLM query...")
 		decision_json = get_response_from_dating_agent(dating_agent, geomatch)

@@ -24,6 +24,10 @@ class Geomatch:
 	listening: List[Any] = field(default_factory=list)
 	id: str = field(init=False)
 
+	@property
+	def match_type(self) -> str:
+		return "geomatch"
+
 	def __post_init__(self) -> None:
 		random_id: str = ''.join(random.choice(string.ascii_uppercase + string.digits)
 		                         for _ in range(6))
