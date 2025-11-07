@@ -9,17 +9,15 @@ from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 
-# helper classes
 from basebot.geomatch import Geomatch
 from basebot.match import Match
-from tinderbotz.addproxy import get_proxy_extension
 from tinderbotz.helpers.constants_helper import Printouts
 
 BOT_NAME = "BaseBot"
 
 
 class BaseSession:
-	def __init__(self, headless=False, store_session=True, proxy=None, user_data=False):
+	def __init__(self, headless=False, store_session=True, user_data=False):
 		self.session_data = {
 			"duration": 0,
 			"like": 0,
@@ -83,22 +81,6 @@ class BaseSession:
 		if headless:
 			options.headless = True
 
-		if proxy:
-			if '@' in proxy:
-				parts = proxy.split('@')
-
-				user = parts[0].split(':')[0]
-				pwd = parts[0].split(':')[1]
-
-				host = parts[1].split(':')[0]
-				port = parts[1].split(':')[1]
-
-				extension = get_proxy_extension(PROXY_HOST=host, PROXY_PORT=port, PROXY_USER=user,
-				                                PROXY_PASS=pwd)
-				options.add_extension(extension)
-			else:
-				options.add_argument(f'--proxy-server=http://{proxy}')
-
 		# Getting the chromedriver from cache or download it from internet
 		print("Getting ChromeDriver ...")
 		try:
@@ -126,29 +108,18 @@ class BaseSession:
 
 		self.browser.execute_cdp_cmd("Page.setGeolocationOverride", params)
 
-	# NOTE: Need to be logged in for this
-	# def set_distance_range(self, km):
-	#     helper = PreferencesHelper(browser=self.browser)
-	#     helper.set_distance_range(km)
-
-	# def set_age_range(self, min, max):
-	#     helper = PreferencesHelper(browser=self.browser)
-	#     helper.set_age_range(min, max)
-
-	# def set_sexuality(self, type):
-	#     helper = PreferencesHelper(browser=self.browser)
-	#     helper.set_sexualitiy(type)
-
-	# def set_global(self, boolean):
-	#     helper = PreferencesHelper(browser=self.browser)
-	#     helper.set_global(boolean)
-
 	def _get_home_page(self):
 		self.browser.get(self.app_url)
 		time.sleep(5)
 
 	# Actions of the session
 	def wait_for_login(self):
+		if not self._is_logged_in():
+			time.sleep(5)
+			print('Manual interference is required. Please Login')
+			input('press ENTER to continue')
+
+	def _is_logged_in(self):
 		raise NotImplementedError()
 
 	def store_local(self, match):

@@ -66,5 +66,3 @@ if __name__ == "__main__":
 		else:
 			session.dislike()
 		input("Press Enter to continue...")
-		# dislike the profile, so it will show us the next geomatch (since we got infinite amount of dislikes anyway)
-		# session.like()
