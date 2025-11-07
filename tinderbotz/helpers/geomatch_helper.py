@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from tinderbotz.helpers.geomatch import Geomatch
-from tinderbotz.helpers.geomatch_svg_mapper import SVG_MAP
+from tinderbotz.helpers.geomatch_svg_mapper import SVG_MAP, SvgPaths
 from tinderbotz.helpers.xpaths import content
 
 
@@ -219,6 +219,13 @@ class GeomatchHelper:
 				continue
 
 			value: str = elements[0].text
+
+			# Note: we can extend this for more info
+			SVG_MAP: Dict[str, str] = {
+				SvgPaths.HEIGHT_SVG: "height",
+				SvgPaths.DISTANCE_SVG: "distance",
+				SvgPaths.WORK_SVG_PATH: "work",
+			}
 
 			if SVG_MAP.get(svg_val) is not None:
 				category: Optional[str] = SVG_MAP.get(svg_val)
