@@ -6,3 +6,4 @@ chrome_profile/
 .vscode/
 data/
 .env
+configuration/

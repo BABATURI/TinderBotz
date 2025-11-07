@@ -20,7 +20,6 @@ class Geomatch:
 	passions: Optional[str] = None
 	instagram: Optional[str] = None
 	image_urls: List[str] = field(default_factory=list)
-	prompts: List[Any] = field(default_factory=list)
 	listening: List[Any] = field(default_factory=list)
 	id: str = field(init=False)
 

@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from tinderbotz.helpers.geomatch import Geomatch
-from tinderbotz.helpers.geomatch_svg_mapper import SVG_MAP, SvgPaths
+from tinderbotz.helpers.geomatch_svg_mapper import SvgPaths
 from tinderbotz.helpers.xpaths import content
 
 
@@ -103,7 +103,7 @@ class GeomatchHelper:
 
 		return geomatch
 
-	def _close_profile(self, second_try: bool = False) -> None:
+	def _close_profile(self) -> None:
 		action: ActionChains = ActionChains(self.browser)
 		action.send_keys(Keys.ARROW_DOWN).perform()
 
