@@ -2,17 +2,16 @@ import undetected_chromedriver as uc
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import (
-	TimeoutException,
-	ElementClickInterceptedException,
-	NoSuchElementException,
-)
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 from typing import Optional, Dict, Any, List, Tuple
 import time
 import re
+
+from tinderbotz.helpers.geomatch import Geomatch
+from tinderbotz.helpers.geomatch_svg_mapper import SVG_MAP
 from tinderbotz.helpers.xpaths import content
 
 
@@ -82,6 +81,41 @@ class GeomatchHelper:
 		except (TimeoutException, ElementClickInterceptedException):
 			self._get_home_page()
 
+	def get_geomatch(self) -> Optional[Geomatch]:
+		name: Optional[str] = self.__get_name()
+		age: Optional[int] = self.__get_age()
+
+		bio, _, _, _, anthem, looking_for = self.__get_bio_and_passions()
+		images: List[str] = self.__get_image_urls()
+		instagram: Optional[str] = self.__get_insta(bio)
+		rowdata: dict = self.__get_row_data()
+		work: Optional[str] = rowdata.get('work')
+		study: Optional[str] = rowdata.get('education')
+		home: Optional[str] = rowdata.get('home')
+		distance: Optional[str] = rowdata.get('distance')
+		gender: Optional[str] = rowdata.get('gender')
+		passions: str = ", ".join(rowdata['interests'])
+		lifestyle: str = f"smoking: {rowdata.get('smoking')}\ndrinking: {rowdata.get('drinking')}\nworkout: {rowdata.get('workout')}"
+		basics: str = f"zodiac: {rowdata.get('zodiac')}"
+
+		return Geomatch(
+			name=name,
+			age=age,
+			work=work,
+			gender=gender,
+			study=study,
+			home=home,
+			distance=distance,
+			bio=bio,
+			passions=passions,
+			lifestyle=lifestyle,
+			basics=basics,
+			anthem=anthem,
+			looking_for=looking_for,
+			instagram=instagram,
+			image_urls=images
+		)
+
 	def _close_profile(self, second_try: bool = False) -> None:
 		action: ActionChains = ActionChains(self.browser)
 		action.send_keys(Keys.ARROW_DOWN).perform()
@@ -105,7 +139,7 @@ class GeomatchHelper:
 			if not second_try:
 				self._open_profile(second_try=True)
 
-	def get_name(self) -> Optional[str]:
+	def __get_name(self) -> Optional[str]:
 		self._open_profile()
 
 		try:
@@ -121,7 +155,7 @@ class GeomatchHelper:
 		except Exception:
 			return None
 
-	def get_age(self) -> Optional[int]:
+	def __get_age(self) -> Optional[int]:
 		self._open_profile()
 
 		age: Optional[int] = None
@@ -154,20 +188,7 @@ class GeomatchHelper:
 			pass
 		return found
 
-	_WORK_SVG: str = "M7.15 3.434h5.7V1.452a.728.728 0 0 0-.724-.732H7.874a.737.737 0 0 0-.725.732v1.982z"
-	_STUDYING_SVG_PATH: str = "M11.87 5.026L2.186 9.242c-.25.116-.25.589 0 .705l.474.204v2.622a.78.78 0 0 0-.344.657c0 .42.313.767.69.767.378 0 .692-.348.692-.767a.78.78 0 0 0-.345-.657v-2.322l2.097.921a.42.42 0 0 0-.022.144v3.83c0 .45.27.801.626 1.101.358.302.842.572 1.428.804 1.172.46 2.755.776 4.516.776 1.763 0 3.346-.317 4.518-.777.586-.23 1.07-.501 1.428-.803.355-.3.626-.65.626-1.1v-3.83a.456.456 0 0 0-.022-.145l3.264-1.425c.25-.116.25-.59 0-.705L12.13 5.025c-.082-.046-.22-.017-.26 0v.001zm.13.767l8.743 3.804L12 13.392 3.257 9.599l8.742-3.806zm-5.88 5.865l5.75 2.502a.319.319 0 0 0 .26 0l5.75-2.502v3.687c0 .077-.087.262-.358.491-.372.29-.788.52-1.232.68-1.078.426-2.604.743-4.29.743s-3.212-.317-4.29-.742c-.444-.161-.86-.39-1.232-.68-.273-.23-.358-.415-.358-.492v-3.687z"
-	_HOME_SVG_PATH: str = "M19.695 9.518H4.427V21.15h15.268V9.52zM3.109 9.482h17.933L12.06 3.709 3.11 9.482z"
-	_LOCATION_SVG_PATH: str = "M11.436 21.17l-.185-.165a35.36 35.36 0 0 1-3.615-3.801C5.222 14.244 4 11.658 4 9.524 4 5.305 7.267 2 11.436 2c4.168 0 7.437 3.305 7.437 7.524 0 4.903-6.953 11.214-7.237 11.48l-.2.167zm0-18.683c-3.869 0-6.9 3.091-6.9 7.037 0 4.401 5.771 9.927 6.897 10.972 1.12-1.054 6.902-6.694 6.902-10.95.001-3.968-3.03-7.059-6.9-7.059h.001z"
-	_DISTANCE_SVG: str = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" focusable="false" role="img" class="Va(tt) Sq(16px)"><title></title><g fill="var(--color--icon-secondary, inherit)"><path fill-rule="evenodd" d="M12.301 23.755c.746-.659 9.449-8.339 9.449-14.337C21.75 4.138 17.463 0 11.998 0 6.534 0 2.25 4.138 2.25 9.418c0 2.675 1.602 5.91 4.769 9.616a45.204 45.204 0 0 0 4.737 4.759l.246.207.26-.21zm-.305-2.424c.94-.889 2.376-2.32 3.77-4.011 1.084-1.315 2.105-2.741 2.847-4.152.753-1.433 1.142-2.705 1.142-3.75 0-4.113-3.328-7.423-7.757-7.423-4.428 0-7.753 3.309-7.753 7.423 0 1.941 1.208 4.713 4.29 8.319a42.901 42.901 0 0 0 3.461 3.594" clip-rule="evenodd"></path><path fill-rule="evenodd" d="M12 6.998a2.002 2.002 0 1 0 0 4.004 2.002 2.002 0 0 0 0-4.005M8.002 9a3.997 3.997 0 1 1 7.995 0 3.997 3.997 0 0 1-7.994 0" clip-rule="evenodd"></path></g></svg>'
-	_GENDER_SVG_PATH: str = "M15.507 13.032c1.14-.952 1.862-2.656 1.862-5.592C17.37 4.436 14.9 2 11.855 2 8.81 2 6.34 4.436 6.34 7.44c0 3.07.786 4.8 2.02 5.726-2.586 1.768-5.054 4.62-4.18 6.204 1.88 3.406 14.28 3.606 15.726 0 .686-1.71-1.828-4.608-4.4-6.338"
-	_HEIGHT_SVG: str = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" focusable="false" role="img" class="Va(tt) Sq(16px)"><title></title><g fill="var(--color--icon-secondary, inherit)"><path fill-rule="evenodd" d="M16.95 0a1 1 0 0 1 .707.293l6.05 6.05a1 1 0 0 1 0 1.414l-15.95 15.95a1 1 0 0 1-1.414 0l-6.05-6.05a1 1 0 0 1 0-1.414L16.243.293A1 1 0 0 1 16.95 0M2.414 16.95l4.636 4.636 1.116-1.116-2.318-2.318a1 1 0 1 1 1.414-1.414l2.318 2.317 1.308-1.308-1.15-1.15a1 1 0 1 1 1.414-1.415l1.15 1.151 1.309-1.308-2.318-2.318a1 1 0 0 1 1.414-1.414l2.318 2.318 1.308-1.308-1.151-1.152a1 1 0 0 1 1.414-1.414l1.151 1.151 1.308-1.308-2.317-2.318a1 1 0 0 1 1.414-1.414l2.318 2.318 1.116-1.116-4.636-4.636z" clip-rule="evenodd"></path></g></svg>'
-	_SVG_MAP: Dict[str, str] = {
-		_HEIGHT_SVG: "height",
-		_DISTANCE_SVG: "distance",
-		_WORK_SVG: "work",
-	}
-
-	def get_row_data(self) -> Dict[str, Any]:
+	def __get_row_data(self) -> Dict[str, Any]:
 		rowdata: Dict[str, Any] = {
 			"interests": []
 		}
@@ -212,8 +233,8 @@ class GeomatchHelper:
 
 			value: str = elements[0].text
 
-			if self._SVG_MAP.get(svg_val, None) != None:
-				category: Optional[str] = self._SVG_MAP.get(svg_val)
+			if SVG_MAP.get(svg_val) is not None:
+				category: Optional[str] = SVG_MAP.get(svg_val)
 				if category is not None:
 					rowdata[category] = value
 
@@ -223,7 +244,8 @@ class GeomatchHelper:
 
 		return rowdata
 
-	def get_bio_and_passions(self) -> Tuple[Optional[str], List[str], List[str], List[str], Optional[str], Optional[str]]:
+	def __get_bio_and_passions(self) -> Tuple[
+		Optional[str], List[str], List[str], List[str], Optional[str], Optional[str]]:
 		self._open_profile()
 
 		bio: Optional[str] = None
@@ -236,8 +258,6 @@ class GeomatchHelper:
 		}
 
 		anthem: Optional[str] = None
-
-		lifestyle: List[str] = []
 
 		# Bio
 		try:
@@ -257,14 +277,14 @@ class GeomatchHelper:
 		return bio, infoItems["passions"], infoItems["lifestyle"], infoItems[
 			"basics"], anthem, looking_for
 
-	def get_image_urls(self) -> List[str]:
+	def __get_image_urls(self) -> List[str]:
 		self._open_profile()
 
 		images: List[str] = []
 		idx: int = 0
 		while True:
 			elements: List[WebElement] = self.browser.find_elements(By.XPATH,
-			                                      f'//*[@id="carousel-item-{idx}"]/div/div')
+			                                                        f'//*[@id="carousel-item-{idx}"]/div/div')
 
 			idx += 1
 
@@ -302,7 +322,7 @@ class GeomatchHelper:
 		)
 		return regrex_pattern.sub(r'', text)
 
-	def get_insta(self, text: Optional[str]) -> Optional[str]:
+	def __get_insta(self, text: Optional[str]) -> Optional[str]:
 		"""Take the bio and read line by line to match if the description
 		contain an instagram user.
 		Args:

@@ -1,8 +1,5 @@
-# Selenium: automation of browser
-# from webdriver_manager.chrome import ChromeDriverManager
-# some other imports :-)
 import time
-from typing import Optional, List, Union
+from typing import Optional, List
 
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, \
 	ElementNotVisibleException
@@ -10,8 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from basebot.basebot import BaseSession
-from basebot.match import Geomatch
+from tinderbotz.basebot import BaseSession
 from tinderbotz.helpers.email_helper import EmailHelper
 # Tinderbotz: helper classes
 from tinderbotz.helpers.geomatch import Geomatch
@@ -98,40 +94,8 @@ class Session(BaseSession):
 
 		helper: GeomatchHelper = GeomatchHelper(browser=self.browser)
 		self._handle_potential_popups()
-		# TODO: refactor this entire mess of GeomatchHelper
-		name: Optional[str] = helper.get_name()
-		age: Optional[int] = helper.get_age()
 
-		bio, _, _, _, anthem, looking_for = helper.get_bio_and_passions()
-		images: List[str] = helper.get_image_urls()
-		instagram: Optional[str] = helper.get_insta(bio)
-		rowdata: dict = helper.get_row_data()
-		work: Optional[str] = rowdata.get('work')
-		study: Optional[str] = rowdata.get('education')
-		home: Optional[str] = rowdata.get('home')
-		distance: Optional[str] = rowdata.get('distance')
-		gender: Optional[str] = rowdata.get('gender')
-		passions: str = " ".join(rowdata['interests'])
-		lifestyle: str = f"smoking: {rowdata.get('smoking')}\ndrinking: {rowdata.get('drinking')}\nworkout: {rowdata.get('workout')}"
-		basics: str = f"zodiac: {rowdata.get('zodiac')}"
-
-		return Geomatch(
-			name=name,
-			age=age,
-			work=work,
-			gender=gender,
-			study=study,
-			home=home,
-			distance=distance,
-			bio=bio,
-			passions=passions,
-			lifestyle=lifestyle,
-			basics=basics,
-			anthem=anthem,
-			looking_for=looking_for,
-			instagram=instagram,
-			images=images
-		)
+		return helper.get_geomatch()
 
 	def get_chat_ids(self, new: bool = True, messaged: bool = True) -> Optional[List[str]]:
 		if self._is_logged_in():

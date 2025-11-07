@@ -1,6 +1,3 @@
-'''
-Created by Frederikme (TeetiFM)
-'''
 from typing import Dict, Any
 
 from tinderbotz.session import Session, Geomatch
@@ -19,7 +16,7 @@ def get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dict[
     Looking For: {geomatch.looking_for}
     Bio: {geomatch.bio}
     """
-	image_data = geomatch.images[:3]
+	image_data = geomatch.image_urls[:3]
 
 	ai_json_response, total_tokens = dllm.run_llm(query, image_data)
 	print(f"Total tokens used: {total_tokens}")

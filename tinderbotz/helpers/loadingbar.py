@@ -1,6 +1,5 @@
 import sys
 import time
-from typing import Optional
 
 
 class LoadingBar:
