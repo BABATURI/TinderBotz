@@ -6,16 +6,15 @@ from typing import Any, List, Optional
 
 @dataclass
 class Geomatch:
-	name: Optional[str]
-	age: Optional[int]
-	work: Optional[str]
-	study: Optional[str]
-	home: Optional[str]
-	gender: str
-	bio: Optional[str]
+	name: Optional[str] = None
+	age: Optional[int] = None
+	work: Optional[str] = None
+	study: Optional[str] = None
+	home: Optional[str] = None
+	gender: Optional[str] = None
+	bio: Optional[str] = None
 	lifestyle: Optional[str] = None
 	basics: Optional[str] = None
-	anthem: Optional[str] = None
 	looking_for: Optional[str] = None
 	distance: Optional[float] = None
 	passions: Optional[str] = None

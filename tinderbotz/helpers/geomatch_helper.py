@@ -1,14 +1,15 @@
+import re
+import time
+from typing import Optional, Dict, Any, List
+
 import undetected_chromedriver as uc
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
-from typing import Optional, Dict, Any, List, Tuple
-import time
-import re
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.geomatch_svg_mapper import SVG_MAP
@@ -82,39 +83,25 @@ class GeomatchHelper:
 			self._get_home_page()
 
 	def get_geomatch(self) -> Optional[Geomatch]:
+		self._open_profile()
+
 		name: Optional[str] = self.__get_name()
 		age: Optional[int] = self.__get_age()
-
-		bio, _, _, _, anthem, looking_for = self.__get_bio_and_passions()
-		images: List[str] = self.__get_image_urls()
+		bio: Optional[str] = self.__get_bio()
+		looking_for: Optional[str] = self.__get_looking_for()
+		image_urls: List[str] = self.__get_image_urls()
 		instagram: Optional[str] = self.__get_insta(bio)
-		rowdata: dict = self.__get_row_data()
-		work: Optional[str] = rowdata.get('work')
-		study: Optional[str] = rowdata.get('education')
-		home: Optional[str] = rowdata.get('home')
-		distance: Optional[str] = rowdata.get('distance')
-		gender: Optional[str] = rowdata.get('gender')
-		passions: str = ", ".join(rowdata['interests'])
-		lifestyle: str = f"smoking: {rowdata.get('smoking')}\ndrinking: {rowdata.get('drinking')}\nworkout: {rowdata.get('workout')}"
-		basics: str = f"zodiac: {rowdata.get('zodiac')}"
 
-		return Geomatch(
+		geomatch: Geomatch = Geomatch(
 			name=name,
 			age=age,
-			work=work,
-			gender=gender,
-			study=study,
-			home=home,
-			distance=distance,
-			bio=bio,
-			passions=passions,
-			lifestyle=lifestyle,
-			basics=basics,
-			anthem=anthem,
 			looking_for=looking_for,
 			instagram=instagram,
-			image_urls=images
-		)
+			image_urls=image_urls)
+
+		self.__complete_geomatch(geomatch)
+
+		return geomatch
 
 	def _close_profile(self, second_try: bool = False) -> None:
 		action: ActionChains = ActionChains(self.browser)
@@ -188,7 +175,7 @@ class GeomatchHelper:
 			pass
 		return found
 
-	def __get_row_data(self) -> Dict[str, Any]:
+	def __complete_geomatch(self, geomatch: Geomatch) -> None:
 		rowdata: Dict[str, Any] = {
 			"interests": []
 		}
@@ -242,40 +229,29 @@ class GeomatchHelper:
 						distance: str = value.replace("kilometres away", "km")
 						rowdata['distance'] = distance
 
-		return rowdata
+		geomatch.work = rowdata.get('work')
+		geomatch.study = rowdata.get('education')
+		geomatch.home = rowdata.get('home')
+		geomatch.distance = rowdata.get('distance')
+		geomatch.gender = rowdata.get('gender')
+		geomatch.passions = ", ".join(rowdata['interests'])
+		geomatch.lifestyle = f"smoking: {rowdata.get('smoking')}\ndrinking: {rowdata.get('drinking')}\nworkout: {rowdata.get('workout')}"
+		geomatch.basics = f"zodiac: {rowdata.get('zodiac')}"
 
-	def __get_bio_and_passions(self) -> Tuple[
-		Optional[str], List[str], List[str], List[str], Optional[str], Optional[str]]:
-		self._open_profile()
-
-		bio: Optional[str] = None
-		looking_for: Optional[str] = None
-
-		infoItems: Dict[str, List[str]] = {
-			"passions": [],
-			"lifestyle": [],
-			"basics": []
-		}
-
-		anthem: Optional[str] = None
-
-		# Bio
+	def __get_bio(self) -> Optional[str]:
 		try:
-			bio = self.browser.find_element(By.XPATH,
-			                                "//div[@class='C($c-ds-text-primary) Typs(body-1-regular)']").text
-		except Exception as e:
-			pass
+			return self.browser.find_element(By.XPATH,
+			                                 "//div[@class='C($c-ds-text-primary) Typs(body-1-regular)']").text
+		except:
+			return None
 
-		# Looking for
+	def __get_looking_for(self) -> Optional[str]:
 		try:
 			xpath: str = "//span[@class='Typs(display-3-strong) C($c-ds-text-primary) Mstart(4px)']"
-			looking_for = self.browser.find_element(By.XPATH, xpath).text
+			return self.browser.find_element(By.XPATH, xpath).text
 
-		except Exception as e:
-			pass
-
-		return bio, infoItems["passions"], infoItems["lifestyle"], infoItems[
-			"basics"], anthem, looking_for
+		except:
+			return None
 
 	def __get_image_urls(self) -> List[str]:
 		self._open_profile()
