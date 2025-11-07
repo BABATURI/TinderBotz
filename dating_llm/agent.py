@@ -21,7 +21,7 @@ def _get_image_data(url):
         if max(img.size) > max_dim:
             ratio = max_dim / max(img.size)
             new_size = (int(img.width * ratio), int(img.height * ratio))
-            img = img.resize(new_size, Image.LANCZOS)
+            img = img.resize(new_size, Image.Resampling.LANCZOS)
 
         out = io.BytesIO()
         # Preserve alpha by using PNG, otherwise compress to JPEG

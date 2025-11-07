@@ -1,13 +1,8 @@
 # Selenium: automation of browser
 # from webdriver_manager.chrome import ChromeDriverManager
-import atexit
 # some other imports :-)
-import os
-import random
 import time
-from pathlib import Path
 
-import undetected_chromedriver as uc
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, \
     ElementNotVisibleException
 from selenium.webdriver.common.by import By
@@ -15,19 +10,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from basebot.basebot import BaseSession
-from basebot.match import Match, Geomatch
-from tinderbotz.addproxy import get_proxy_extension
-from tinderbotz.helpers.constants_helper import Printouts
+from basebot.match import Geomatch
 from tinderbotz.helpers.email_helper import EmailHelper
 # Tinderbotz: helper classes
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.geomatch_helper import GeomatchHelper
-from tinderbotz.helpers.login_helper import LoginHelper
-from tinderbotz.helpers.match import Match
 from tinderbotz.helpers.match_helper import MatchHelper
 from tinderbotz.helpers.preferences_helper import PreferencesHelper
 from tinderbotz.helpers.profile_helper import ProfileHelper
-from tinderbotz.helpers.storage_helper import StorageHelper
 from tinderbotz.helpers.xpaths import *
 
 
@@ -78,24 +68,24 @@ class Session(BaseSession):
         helper = ProfileHelper(browser=self.browser)
         helper.add_photo(filepath)
 
-    def login(self):
+    def wait_for_login(self):
         if not self._is_logged_in():
-            helper = LoginHelper(browser=self.browser)
-            # Note: Sms login isn't supported no more
-            # so we will wait for the user to log on:
             time.sleep(5)
             print('Manual interference is required. Please Login')
             input('press ENTER to continue')
-    
-    def login_using_sms(self, country, phone_number):
-        self.login()
-        if not self._is_logged_in():
-            helper = LoginHelper(browser=self.browser)
-            # Note: Sms login isn't supported no more
-            # so we will wait for the user to log on:
+
+    def _is_logged_in(self):
+        # make sure tinder website is loaded for the first time
+        if not self.app_logged_in_match in self.browser.current_url:
+            # enforce english language
+            self.browser.get(self.app_url)
             time.sleep(5)
-            print('Manual interference is required. Please Login')
-            input('press ENTER to continue')
+
+        if self.app_logged_in_match in self.browser.current_url:
+            return True
+        else:
+            print("User is not logged in yet.\n")
+            return False
 
     def get_geomatch(self, quickload=True):
         if not self._is_logged_in():
@@ -110,7 +100,7 @@ class Session(BaseSession):
         bio, _, _, _, anthem, looking_for = helper.get_bio_and_passions()
         images = helper.get_images()
         instagram = helper.get_insta(bio)
-        rowdata = helper.get_row_data()
+        rowdata = {'interests': []}
         work = rowdata.get('work')
         study = rowdata.get('education')
         home = rowdata.get('home')

@@ -55,42 +55,7 @@ session = Session(headless=False, store_session=True, proxy="23.23.23.23:3128")
 ```
 
 ## Logging in to Tinder
-Logging in can be done in one of the following ways.
-1. Using your Google-account: *Your email must be verified*
-2. Using your Facebook-account: *Your Tinder must be connected to your Facebook*
-3. Using your phone number: *This will require you to manually enter your received code*
-
-### Login by Google & Facebook (RECOMMENDED)
-```
-session.login_using_google(email, password)
-session.login_using_facebook(email, password)
-```
-**Required parameters**</br>
-`email`: *string*</br>
-`password`: *string*</br>
-
-**Example usage**</br>
-```
-session.login_using_google("myemail@gmail.com", "password123")
-session.login_using_facebook("myemail@gmail.com", "password123")
-```
-
-### Login by SMS (DEPRECATED)
-```
-session.login_using_sms(country, phone_number)
-```
-**Required parameters**</br>
-`country`: *string*</br>
-`phone_number`: *string*</br>
-
-**Example usage**</br>
-Let's say your phone_number is +32401234567, then </br>
-***country*** is needed to get the right prefix, in my case +32 and</br>
-***phone_number*** is everything after the prefix (+32).</br>
-```
-session.login_using_sms("Belgium", "401234567")
-```
-**NOTE**: this is not my phone number :)</br>
+Log in once and the cookies will be saved under chrome_profile.
 
 
 # Settings

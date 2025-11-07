@@ -16,25 +16,7 @@ if __name__ == "__main__":
 	# set location (Don't need to be logged in for this)
 	session.set_custom_location(latitude=50.879829, longitude=4.700540)
 
-	# replace this with your own email and password!
-	email = "example@gmail.com"
-	password = "password123"
-
-	# login using your google account with a verified email!
-	session.login_using_google(email, password)
-
-	# Alternatively you can login using facebook with a connected profile!
-	session.login_using_facebook(email, password)
-
-	# Alternatively, you can also use your phone number to login
-	'''
-	- country is needed to get the right prefix, in my case +32
-	- phone_number is everything after the prefix (+32)
-	NOTE: this is not my phone number :)
-	'''
-	country = "Belgium"
-	phone_number = "479011124"
-	session.login_using_sms(country, phone_number)
+	session.wait_for_login()
 
 	# spam likes, dislikes and superlikes
 	# to avoid being banned:

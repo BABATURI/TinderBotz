@@ -17,7 +17,7 @@ if __name__ == "__main__":
     password = "password123"
     
     # login using your google account with a verified email! Alternatively, you can use Facebook login
-    session.login_using_facebook(email, password)
+    session.wait_for_login(email, password)
 
     # start scraping as much geomatches as possible
     while True:
@@ -27,8 +27,7 @@ if __name__ == "__main__":
         geomatch = session.get_geomatch(quickload=False)
 
         # check if crucial data is not empty (This will rarely be the case tho, but we want a 'clean' dataset
-        if geomatch.get_name() is not None \
-                and geomatch.images() != []:
+        if geomatch.get_name() is not None and geomatch.images != []:
 
             # let's store the data of the geomatch locally (this includes all images!)
             session.store_local(geomatch)

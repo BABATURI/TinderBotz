@@ -34,7 +34,7 @@
   * [Prerequisites](#prerequisites)
   * [Installation](#installation)
 * [Usage](#usage-of-tinderbot)
-  * [Documentation](DOCUMENTATION.md)
+  * [Documentation](docs/DOCUMENTATION.md)
   * [Demo](#demonstration)
 * [Example Data Analysis](#example-data-analysis)
 * [Avoiding the Ban](#how-to-avoid-the-ban)

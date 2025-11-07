@@ -1,328 +1,307 @@
-# Selenium: automation of browser
-# from webdriver_manager.chrome import ChromeDriverManager
 import atexit
-# some other imports :-)
 import os
 import random
 import time
 from pathlib import Path
 
 import undetected_chromedriver as uc
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, \
-    ElementNotVisibleException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import *
-
-from tinderbotz.addproxy import get_proxy_extension
-from tinderbotz.helpers.constants_helper import Printouts
 
 # helper classes
 from basebot.geomatch import Geomatch
 from basebot.match import Match
-
-from tinderbotz.helpers.storage_helper import StorageHelper
-from tinderbotz.helpers.xpaths import *
-
+from tinderbotz.addproxy import get_proxy_extension
+from tinderbotz.helpers.constants_helper import Printouts
 
 BOT_NAME = "BaseBot"
 
 
 class BaseSession:
-    def __init__(self, headless=False, store_session=True, proxy=None, user_data=False):
-        self.session_data = {
-            "duration": 0,
-            "like": 0,
-            "dislike": 0,
-            "superlike": 0
-        }
-        # self.app_url and self.app_name must be set by children
-        self.lower_sleep_time = 1.0
-        self.upper_sleep_time = 3.0
-        if not hasattr(self, "app_url") or not hasattr(self, "app_name"):
-            raise ValueError("self.app_url is not set")
-        
-        start_session = time.time()
+	def __init__(self, headless=False, store_session=True, proxy=None, user_data=False):
+		self.session_data = {
+			"duration": 0,
+			"like": 0,
+			"dislike": 0,
+			"superlike": 0
+		}
+		# self.app_url and self.app_name must be set by children
+		self.lower_sleep_time = 1.0
+		self.upper_sleep_time = 3.0
+		if not hasattr(self, "app_url") or not hasattr(self, "app_name"):
+			raise ValueError("self.app_url is not set")
 
-        self.started = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+		start_session = time.time()
 
-        # this function will run when the session ends
-        @atexit.register
-        def cleanup():
-            # End session duration
-            seconds = int(time.time() - start_session)
-            self.session_data["duration"] = seconds
+		self.started = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
-            # add session data into a list of messages
-            lines = []
-            for key in self.session_data:
-                message = "{}: {}".format(key, self.session_data[key])
-                lines.append(message)
+		# this function will run when the session ends
+		@atexit.register
+		def cleanup():
+			# End session duration
+			seconds = int(time.time() - start_session)
+			self.session_data["duration"] = seconds
 
-            # print out the statistics of the session
-            try:
-                box = self._get_msg_box(lines=lines, title=BOT_NAME)
-                print(box)
-            finally:
-                print("Started session: {}".format(self.started))
-                y = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print("Ended session: {}".format(y))
-            
-            # Close browser properly
-            self.browser.quit()
+			# add session data into a list of messages
+			lines = []
+			for key in self.session_data:
+				message = "{}: {}".format(key, self.session_data[key])
+				lines.append(message)
 
-        # Go further with the initialisation
-        # Setting some options of the browser here below
+			# print out the statistics of the session
+			try:
+				box = self._get_msg_box(lines=lines, title=BOT_NAME)
+				print(box)
+			finally:
+				print("Started session: {}".format(self.started))
+				y = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+				print("Ended session: {}".format(y))
 
-        options = uc.ChromeOptions()
+			# Close browser properly
+			self.browser.quit()
 
-        # Create empty profile to avoid annoying Mac Popup
-        if store_session:
-            if not user_data:
-                user_data = f"{Path().absolute()}/chrome_profile/"
-            if not os.path.isdir(user_data):
-                os.mkdir(user_data)
+		# Go further with the initialisation
+		# Setting some options of the browser here below
 
-            Path(f'{user_data}First Run').touch()
-            options.add_argument(f"--user-data-dir={user_data}")
+		options = uc.ChromeOptions()
 
-        #options.add_argument("--start-maximized")
-        options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
-        options.add_argument("--lang=en-GB")
+		# Create empty profile to avoid annoying Mac Popup
+		if store_session:
+			if not user_data:
+				user_data = f"{Path().absolute()}/chrome_profile/"
+			if not os.path.isdir(user_data):
+				os.mkdir(user_data)
 
-        if headless:
-            options.headless = True
+			Path(f'{user_data}First Run').touch()
+			options.add_argument(f"--user-data-dir={user_data}")
 
-        if proxy:
-            if '@' in proxy:
-                parts = proxy.split('@')
+		# options.add_argument("--start-maximized")
+		options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+		options.add_argument("--lang=en-GB")
 
-                user = parts[0].split(':')[0]
-                pwd = parts[0].split(':')[1]
+		if headless:
+			options.headless = True
 
-                host = parts[1].split(':')[0]
-                port = parts[1].split(':')[1]
+		if proxy:
+			if '@' in proxy:
+				parts = proxy.split('@')
 
-                extension = get_proxy_extension(PROXY_HOST=host, PROXY_PORT=port, PROXY_USER=user, PROXY_PASS=pwd)
-                options.add_extension(extension)
-            else:
-                options.add_argument(f'--proxy-server=http://{proxy}')
+				user = parts[0].split(':')[0]
+				pwd = parts[0].split(':')[1]
 
-        # Getting the chromedriver from cache or download it from internet
-        print("Getting ChromeDriver ...")
-        try:
-            self.browser = uc.Chrome(options=options)  # ChromeDriverManager().install(),
-        except Exception as e:
-            print(str(e))
-            print("maybe you should update chrome")
-            raise e
+				host = parts[1].split(':')[0]
+				port = parts[1].split(':')[1]
 
-        # Cool banner
-        print(Printouts.BANNER.value)
-        time.sleep(1)
-        
-        print("Started session: {}\n\n".format(self.started))
-        self.browser.get(self.app_url)
+				extension = get_proxy_extension(PROXY_HOST=host, PROXY_PORT=port, PROXY_USER=user,
+				                                PROXY_PASS=pwd)
+				options.add_extension(extension)
+			else:
+				options.add_argument(f'--proxy-server=http://{proxy}')
 
-    # Setting a custom location
-    def set_custom_location(self, latitude, longitude, accuracy="100%"):
+		# Getting the chromedriver from cache or download it from internet
+		print("Getting ChromeDriver ...")
+		try:
+			self.browser = uc.Chrome(options=options)  # ChromeDriverManager().install(),
+		except Exception as e:
+			print(str(e))
+			print("maybe you should update chrome")
+			raise e
 
-        params = {
-            "latitude": latitude,
-            "longitude": longitude,
-            "accuracy": int(accuracy.split('%')[0])
-        }
+		# Cool banner
+		print(Printouts.BANNER.value)
+		time.sleep(1)
 
-        self.browser.execute_cdp_cmd("Page.setGeolocationOverride", params)
+		print("Started session: {}\n\n".format(self.started))
+		self.browser.get(self.app_url)
 
-    # NOTE: Need to be logged in for this
-    # def set_distance_range(self, km):
-    #     helper = PreferencesHelper(browser=self.browser)
-    #     helper.set_distance_range(km)
+	# Setting a custom location
+	def set_custom_location(self, latitude, longitude, accuracy="100%"):
 
-    # def set_age_range(self, min, max):
-    #     helper = PreferencesHelper(browser=self.browser)
-    #     helper.set_age_range(min, max)
+		params = {
+			"latitude": latitude,
+			"longitude": longitude,
+			"accuracy": int(accuracy.split('%')[0])
+		}
 
-    # def set_sexuality(self, type):
-    #     helper = PreferencesHelper(browser=self.browser)
-    #     helper.set_sexualitiy(type)
+		self.browser.execute_cdp_cmd("Page.setGeolocationOverride", params)
 
-    # def set_global(self, boolean):
-    #     helper = PreferencesHelper(browser=self.browser)
-    #     helper.set_global(boolean)
+	# NOTE: Need to be logged in for this
+	# def set_distance_range(self, km):
+	#     helper = PreferencesHelper(browser=self.browser)
+	#     helper.set_distance_range(km)
 
-    def _get_home_page(self):
-        self.browser.get(self.app_url)
-        time.sleep(5)
+	# def set_age_range(self, min, max):
+	#     helper = PreferencesHelper(browser=self.browser)
+	#     helper.set_age_range(min, max)
 
-    # Actions of the session
-    def login(self, method, *args, **kwargs):
-        raise NotImplementedError()
+	# def set_sexuality(self, type):
+	#     helper = PreferencesHelper(browser=self.browser)
+	#     helper.set_sexualitiy(type)
 
-    def store_local(self, match):
-        # TODO: storing images is broken, need to fix it later
-        if isinstance(match, Match):
-            filename = 'matches'
-        elif isinstance(match, Geomatch):
-            filename = 'geomatches'
-        else:
-            print("type of match is unknown, storing local impossible")
-            print("Crashing in 3.2.1... :)")
-            assert False
+	# def set_global(self, boolean):
+	#     helper = PreferencesHelper(browser=self.browser)
+	#     helper.set_global(boolean)
 
-        # store its images - nah we save space
-        # for image in match.images:
-        #     StorageHelper.store_image_as_url(image=image, directory='data/{}/images'.format(filename))
+	def _get_home_page(self):
+		self.browser.get(self.app_url)
+		time.sleep(5)
 
-        # store its userdata
-        match.store_json(directory=os.path.join("data", filename), filename=filename)
-    
-    def like(self, randomize_sleep=True):
-        # base option, can be overwritten
-        if not self._is_logged_in():
-            return
-        try:
-            action = ActionChains(self.browser)
-            action.send_keys(Keys.ARROW_RIGHT).perform()
-        except (TimeoutException, ElementClickInterceptedException):
-            self._get_home_page()
-            return False
-        if randomize_sleep:
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
-        return True
-    
-    def dislike(self, randomize_sleep=True):
-        # base option, can be overwritten
-        if not self._is_logged_in():
-            return
-        try:
-            action = ActionChains(self.browser)
-            action.send_keys(Keys.ARROW_LEFT).perform()
-        except (TimeoutException, ElementClickInterceptedException):
-            self._get_home_page()
-            return False
-        if randomize_sleep:
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
-        return True
+	# Actions of the session
+	def wait_for_login(self):
+		raise NotImplementedError()
 
-    def like_multiple(self, amount=1, ratio='100%', sleep=1, randomize_sleep = True):
-        initial_sleep = sleep
-        ratio = float(ratio.split('%')[0]) / 100
+	def store_local(self, match):
+		# TODO: storing images is broken, need to fix it later
+		if isinstance(match, Match):
+			filename = 'matches'
+		elif isinstance(match, Geomatch):
+			filename = 'geomatches'
+		else:
+			print("type of match is unknown, storing local impossible")
+			print("Crashing in 3.2.1... :)")
+			assert False
 
-        if not self._is_logged_in():
-            return
-        
-        amount_liked = 0
-        # handle one time up front, from then on check after every action instead of before
-        print("\nLiking profiles started.")
-        while amount_liked < amount:
-            self._handle_potential_popups()
-            # randomize sleep
-            if random.random() <= ratio:
-                if self.like(randomize_sleep):
-                    amount_liked += 1
-                    # update for stats after session ended
-                    self.session_data['like'] += 1
-                    print(f"{amount_liked}/{amount} liked, sleep: {sleep}")
-            else:
-                self.dislike(randomize_sleep)
-                # update for stats after session ended
-                self.session_data['dislike'] += 1
+		# store its images - nah we save space
+		# for image in match.images:
+		#     StorageHelper.store_image_as_url(image=image, directory='data/{}/images'.format(filename))
 
-        self._print_liked_stats()
+		# store its userdata
+		match.store_json(directory=os.path.join("data", filename), filename=filename)
 
-    def dislike_multiple(self, amount=1):
-        if not self._is_logged_in():
-            return
-        
-        for _ in range(amount):
-            self._handle_potential_popups()
-            self.dislike()
+	def like(self, randomize_sleep=True):
+		# base option, can be overwritten
+		if not self._is_logged_in():
+			return
+		try:
+			action = ActionChains(self.browser)
+			action.send_keys(Keys.ARROW_RIGHT).perform()
+		except (TimeoutException, ElementClickInterceptedException):
+			self._get_home_page()
+			return False
+		if randomize_sleep:
+			time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+		return True
 
-            # update for stats after session ended
-            self.session_data['dislike'] += 1
-        
-        self._print_liked_stats()
+	def dislike(self, randomize_sleep=True):
+		# base option, can be overwritten
+		if not self._is_logged_in():
+			return
+		try:
+			action = ActionChains(self.browser)
+			action.send_keys(Keys.ARROW_LEFT).perform()
+		except (TimeoutException, ElementClickInterceptedException):
+			self._get_home_page()
+			return False
+		if randomize_sleep:
+			time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+		return True
 
-    def superlike(self, randomize_sleep=True):
-        if not self._is_logged_in():
-            return
-        try:
-            action = ActionChains(self.browser)
-            action.send_keys(Keys.ENTER).perform()
-        except (TimeoutException, ElementClickInterceptedException):
-            self._get_home_page()
-            return False
-        if randomize_sleep:
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
-        return True
+	def like_multiple(self, amount=1, ratio='100%', sleep=1, randomize_sleep=True):
+		initial_sleep = sleep
+		ratio = float(ratio.split('%')[0]) / 100
 
-    def get_geomatch(self, quickload=True) -> Geomatch:
-        # get current match
-        raise NotImplementedError()
+		if not self._is_logged_in():
+			return
 
-    def get_chat_ids(self, new=True, messaged=True):
-        raise NotImplementedError()
+		amount_liked = 0
+		# handle one time up front, from then on check after every action instead of before
+		print("\nLiking profiles started.")
+		while amount_liked < amount:
+			self._handle_potential_popups()
+			# randomize sleep
+			if random.random() <= ratio:
+				if self.like(randomize_sleep):
+					amount_liked += 1
+					# update for stats after session ended
+					self.session_data['like'] += 1
+					print(f"{amount_liked}/{amount} liked, sleep: {sleep}")
+			else:
+				self.dislike(randomize_sleep)
+				# update for stats after session ended
+				self.session_data['dislike'] += 1
 
-    def get_new_matches(self, amount=100000, quickload=True):
-        raise NotImplementedError()
+		self._print_liked_stats()
 
-    def get_messaged_matches(self, amount=100000, quickload=True):
-        raise NotImplementedError()
+	def dislike_multiple(self, amount=1):
+		if not self._is_logged_in():
+			return
 
-    def send_message(self, chatid, message):
-        raise NotImplementedError()
-    
-    def send_socials(self, chatid, media):
-        # not really hard, just send a fixed msg using
-        socials = ""
-        self.send_message(chatid, socials)
+		for _ in range(amount):
+			self._handle_potential_popups()
+			self.dislike()
 
-    def unmatch(self, chatid):
-        raise NotImplementedError()
+			# update for stats after session ended
+			self.session_data['dislike'] += 1
 
-    # Utilities
-    def _handle_potential_popups(self):
-        raise NotImplementedError()
+		self._print_liked_stats()
 
-    def _is_logged_in(self):
-        # make sure tinder website is loaded for the first time
-        if not self.app_logged_in_match in self.browser.current_url:
-            # enforce english language
-            self.browser.get(self.app_url)
-            time.sleep(5)
+	def superlike(self, randomize_sleep=True):
+		if not self._is_logged_in():
+			return
+		try:
+			action = ActionChains(self.browser)
+			action.send_keys(Keys.ENTER).perform()
+		except (TimeoutException, ElementClickInterceptedException):
+			self._get_home_page()
+			return False
+		if randomize_sleep:
+			time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+		return True
 
-        if self.app_logged_in_match in self.browser.current_url:
-            return True
-        else:
-            print("User is not logged in yet.\n")
-            return False
+	def get_geomatch(self, quickload=True) -> Geomatch:
+		# get current match
+		raise NotImplementedError()
 
-    def _get_msg_box(self, lines, indent=1, width=None, title=None):
-        """Print message-box with optional title."""
-        space = " " * indent
-        if not width:
-            width = max(map(len, lines))
-        box = f'/{"=" * (width + indent * 2)}\\\n'  # upper_border
-        if title:
-            box += f'|{space}{title:<{width}}{space}|\n'  # title
-            box += f'|{space}{"-" * len(title):<{width}}{space}|\n'  # underscore
-        box += ''.join([f'|{space}{line:<{width}}{space}|\n' for line in lines])
-        box += f'\\{"=" * (width + indent * 2)}/'  # lower_border
-        return box
+	def get_chat_ids(self, new=True, messaged=True):
+		raise NotImplementedError()
 
-    def _print_liked_stats(self):
-        likes = self.session_data['like']
-        dislikes = self.session_data['dislike']
-        superlikes = self.session_data['superlike']
+	def get_new_matches(self, amount=100000, quickload=True):
+		raise NotImplementedError()
 
-        if superlikes > 0:
-            print(f"You've superliked {self.session_data['superlike']} profiles during this session.")
-        if likes > 0:
-            print(f"You've liked {self.session_data['like']} profiles during this session.")
-        if dislikes > 0:
-            print(f"You've disliked {self.session_data['dislike']} profiles during this session.")
+	def get_messaged_matches(self, amount=100000, quickload=True):
+		raise NotImplementedError()
+
+	def send_message(self, chatid, message):
+		raise NotImplementedError()
+
+	def send_socials(self, chatid, media):
+		# not really hard, just send a fixed msg using
+		socials = ""
+		self.send_message(chatid, socials)
+
+	def unmatch(self, chatid):
+		raise NotImplementedError()
+
+	# Utilities
+	def _handle_potential_popups(self):
+		raise NotImplementedError()
+
+	def _is_logged_in(self):
+		raise NotImplementedError()
+
+	def _get_msg_box(self, lines, indent=1, width=None, title=None):
+		"""Print message-box with optional title."""
+		space = " " * indent
+		if not width:
+			width = max(map(len, lines))
+		box = f'/{"=" * (width + indent * 2)}\\\n'  # upper_border
+		if title:
+			box += f'|{space}{title:<{width}}{space}|\n'  # title
+			box += f'|{space}{"-" * len(title):<{width}}{space}|\n'  # underscore
+		box += ''.join([f'|{space}{line:<{width}}{space}|\n' for line in lines])
+		box += f'\\{"=" * (width + indent * 2)}/'  # lower_border
+		return box
+
+	def _print_liked_stats(self):
+		likes = self.session_data['like']
+		dislikes = self.session_data['dislike']
+		superlikes = self.session_data['superlike']
+
+		if superlikes > 0:
+			print(
+				f"You've superliked {self.session_data['superlike']} profiles during this session.")
+		if likes > 0:
+			print(f"You've liked {self.session_data['like']} profiles during this session.")
+		if dislikes > 0:
+			print(f"You've disliked {self.session_data['dislike']} profiles during this session.")
