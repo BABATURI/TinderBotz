@@ -10,7 +10,6 @@ from tinderbotz.helpers.constants_helper import Sexuality
 
 
 class PreferencesHelper:
-
     delay = 5
 
     HOME_URL = "https://www.tinder.com/app/profile"
@@ -51,8 +50,8 @@ class PreferencesHelper:
 
         print("\nSlider of distance will be adjusted...")
         current_percentage = float(link.get_attribute('style').split(' ')[1].split('%')[0])
-        print("from {}% = {}km".format(current_percentage, current_percentage*1.6))
-        print("to {}% = {}km".format(final_percentage, final_percentage*1.6))
+        print("from {}% = {}km".format(current_percentage, current_percentage * 1.6))
+        print("to {}% = {}km".format(final_percentage, final_percentage * 1.6))
         print("with a fault margin of 1%\n")
 
         # start adjusting the distance slider
@@ -65,7 +64,7 @@ class PreferencesHelper:
             # update current percentage
             current_percentage = float(link.get_attribute('style').split(' ')[1].split('%')[0])
 
-        print("Ended slider with {}% = {}km\n\n".format(current_percentage, current_percentage*1.6))
+        print("Ended slider with {}% = {}km\n\n".format(current_percentage, current_percentage * 1.6))
         time.sleep(5)
 
     def set_age_range(self, min, max):
@@ -90,7 +89,7 @@ class PreferencesHelper:
         if max > max_age_tinder:
             max = max_age_tinder
 
-        while max-min < 5:
+        while max - min < 5:
             max += 1
             min -= 1
 
@@ -111,7 +110,7 @@ class PreferencesHelper:
         print("\nSlider of ages will be adjusted...")
         print("Minimum age will go ...")
         print("from {}% = {} years old".format(current_percentage_min,
-                                               (current_percentage_min/percentage_per_year)+min_age_tinder))
+                                               (current_percentage_min / percentage_per_year) + min_age_tinder))
         print("to {}% = {} years old".format(to_percentage_min, min))
         print("Maximum age will go ...")
         print("from {}% = {} years old".format(current_percentage_max,
@@ -120,7 +119,8 @@ class PreferencesHelper:
         print("with a fault margin of 1%\n")
 
         # start adjusting the distance slider
-        while abs(to_percentage_min - current_percentage_min) > 1 or abs(to_percentage_max - current_percentage_max) > 1:
+        while abs(to_percentage_min - current_percentage_min) > 1 or abs(
+                to_percentage_max - current_percentage_max) > 1:
             ac = ActionChains(self.browser)
 
             if current_percentage_min < to_percentage_min:
@@ -138,8 +138,9 @@ class PreferencesHelper:
             current_percentage_min = float(btn_minage.get_attribute('style').split(' ')[1].split('%')[0])
             current_percentage_max = float(btn_maxage.get_attribute('style').split(' ')[1].split('%')[0])
 
-        print("Ended slider with ages from {} years old  to {} years old\n\n".format((current_percentage_min/percentage_per_year)+min_age_tinder,
-              (current_percentage_max / percentage_per_year) + min_age_tinder))
+        print("Ended slider with ages from {} years old  to {} years old\n\n".format(
+            (current_percentage_min / percentage_per_year) + min_age_tinder,
+            (current_percentage_max / percentage_per_year) + min_age_tinder))
         time.sleep(5)
 
     def set_sexualitiy(self, type):

@@ -10,7 +10,6 @@ from tinderbotz.helpers.xpaths import content, modal_manager
 
 
 class ProfileHelper:
-
     delay = 5
 
     HOME_URL = "https://www.tinder.com/app/profile"
@@ -34,7 +33,7 @@ class ProfileHelper:
 
         try:
             WebDriverWait(self.browser, self.delay).until(
-                    EC.presence_of_element_located((By.XPATH, xpath)))
+                EC.presence_of_element_located((By.XPATH, xpath)))
             self.browser.find_element(By.XPATH, xpath).click()
             time.sleep(1)
         except Exception as e:
@@ -44,7 +43,7 @@ class ProfileHelper:
         xpath = f"{content}/div/div[1]/div/main/div[1]/div/div/div/div/div[1]/a"
         try:
             WebDriverWait(self.browser, self.delay).until(
-                    EC.presence_of_element_located((By.XPATH, xpath)))
+                EC.presence_of_element_located((By.XPATH, xpath)))
             self.browser.find_element(By.XPATH, xpath).click()
             time.sleep(1)
         except Exception as e:
@@ -58,7 +57,7 @@ class ProfileHelper:
         xpath = f'{content}/div/div[1]/div/main/div[1]/div/div/div/div/div[2]/span/button'
         try:
             WebDriverWait(self.browser, self.delay).until(
-                    EC.presence_of_element_located((By.XPATH, xpath)))
+                EC.presence_of_element_located((By.XPATH, xpath)))
             btn = self.browser.find_element(By.XPATH, xpath)
             self.browser.execute_script("arguments[0].scrollIntoView();", btn)
             btn.click()
@@ -68,7 +67,7 @@ class ProfileHelper:
         xpath_input = f"{modal_manager}/div/div/div[1]/div[2]/div[2]/div/div/input"
         try:
             WebDriverWait(self.browser, self.delay).until(
-                    EC.presence_of_element_located((By.XPATH, xpath_input)))
+                EC.presence_of_element_located((By.XPATH, xpath_input)))
             self.browser.find_element(By.XPATH, xpath_input).send_keys(filepath)
         except Exception as e:
             print(e)
@@ -76,7 +75,7 @@ class ProfileHelper:
         xpath_choose = f"{modal_manager}/div/div/div[1]/div[1]/button[2]"
         try:
             WebDriverWait(self.browser, self.delay).until(
-                    EC.presence_of_element_located((By.XPATH, xpath_choose)))
+                EC.presence_of_element_located((By.XPATH, xpath_choose)))
             self.browser.find_element(By.XPATH, xpath_choose).click()
         except Exception as e:
             print(e)
@@ -88,7 +87,7 @@ class ProfileHelper:
 
         try:
             WebDriverWait(self.browser, self.delay).until(
-                    EC.presence_of_element_located((By.XPATH, xpath)))
+                EC.presence_of_element_located((By.XPATH, xpath)))
             text_area = self.browser.find_element(By.XPATH, xpath)
 
             for _ in range(500):

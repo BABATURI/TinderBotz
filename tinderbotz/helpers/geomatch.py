@@ -25,9 +25,9 @@ class Geomatch:
 	prompts: List[str] = field(default_factory=list)
 	id: str = field(init=False)
 
-	@property
-	def match_type(self) -> str:
-		return "geomatch"
+    @property
+    def match_type(self) -> str:
+        return "geomatch"
 
 	def __post_init__(self) -> None:
 		self.gen_id()
