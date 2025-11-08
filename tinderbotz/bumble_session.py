@@ -1,11 +1,15 @@
-import time
 import json
 import logging
+import time
 from typing import List, Optional
-from tinderbotz.base_session import BaseSession
+
 from selenium.webdriver.common.by import By
-from tinderbotz.helpers.geomatch import Geomatch
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
+
+from tinderbotz.base_session import BaseSession
+from tinderbotz.helpers.geomatch import Geomatch
 
 logger = logging.getLogger(__file__)
 
@@ -160,6 +164,10 @@ class BumbleSession(BaseSession):
     def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
         if not self._is_logged_in():
             return None
+
+        xpath = "//div[@class='encounters-action tooltip-activator encounters-action--superswipe']"
+        WebDriverWait(self.browser, 5).until(
+            EC.presence_of_element_located((By.XPATH, xpath)))
 
         geomatch = Geomatch()
         album_article_xpath = "//div[@class='encounters-story__content']"
