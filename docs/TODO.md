@@ -2,3 +2,4 @@
 - remove useless prints
 - create config file for main
 - update config for disliking in cases that do not require llm (smoking, etc.)- maybe not necessary
+- Debug mode And Release Mode (for example- don't ask for the reason from the llm)
