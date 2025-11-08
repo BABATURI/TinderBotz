@@ -39,7 +39,7 @@ def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dic
     return ai_json_response
 
 
-def __perform_round() -> None:
+def __perform_round(max_likes: int = 30, max_swipes: int = 60) -> None:
     with Session() as session:
         location: Tuple[float, float] = (32.15792931573261, 34.84213125060156)
         session.set_custom_location(latitude=location[0], longitude=location[1])
@@ -48,7 +48,9 @@ def __perform_round() -> None:
 
         dating_agent: DatingLLM = __create_dating_agent()
 
-        for _ in range(10):
+        likes_cnt: int = 0
+
+        for _ in range(max_swipes):
             # get profile data (name, age, bio, images, ...)
             geomatch: Geomatch = session.get_geomatch()
             # store this data locally as json with reference to their respective (locally stored) images
@@ -60,19 +62,30 @@ def __perform_round() -> None:
             print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
             if decision_json["decision"] == "like":
                 session.like()
+                likes_cnt += 1
             else:
                 session.dislike()
-            input("Press Enter to continue...")
+
+            if likes_cnt == max_likes:
+                return
 
 
 def main() -> None:
-    # todo- only in specific hours
     # todo- handle no more likes left/no options are left
     while True:
+        MIN_HOUR_FOR_SWIPING: int = 10
+
+        if datetime.now().hour < MIN_HOUR_FOR_SWIPING:
+            time.sleep(MIN_HOUR_FOR_SWIPING - datetime.now().hour)
+
         try:
-            __perform_round()
-        except:
-            time.sleep(60 * 60 * 20)
+            __perform_round(1, 3)
+        except Exception as e:
+            print(f"got exception {e}")
+
+        print("Sleeping till next session")
+        ONE_HOUR_IN_SECS: int = 60 * 60
+        time.sleep(ONE_HOUR_IN_SECS)
 
 
 if __name__ == "__main__":
