@@ -1,2 +1,4 @@
 - handle the case where no one is left in the tinder queue
-- make the bot work in specific times- and close the browser now and then
+- remove useless prints
+- create config file for main
+- update config for disliking in cases that do not require llm (smoking, etc.)- maybe not necessary
