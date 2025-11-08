@@ -124,7 +124,7 @@ class MatchHelper:
 
 		return chatids
 
-	def get_new_matches(self, amount, quickload):
+	def get_new_matches(self, amount):
 		matches = []
 		used_chatids = []
 		iteration = 0
@@ -155,7 +155,7 @@ class MatchHelper:
 			print(f"\nGetting not-interacted-with, NEW MATCHES, part {iteration}")
 			loadingbar = LoadingBar(len(new_chatids), "new matches")
 			for index, chatid in enumerate(new_chatids):
-				matches.append(self.get_match(chatid, quickload))
+				matches.append(self.get_match(chatid))
 				loadingbar.update_loading(index)
 			print("\n")
 
@@ -167,7 +167,7 @@ class MatchHelper:
 
 		return matches
 
-	def get_messaged_matches(self, amount, quickload):
+	def get_messaged_matches(self, amount):
 		matches = []
 		used_chatids = []
 		iteration = 0
@@ -196,7 +196,7 @@ class MatchHelper:
 			print(f"\nGetting interacted-with, MESSAGED MATCHES, part {iteration}")
 			loadingbar = LoadingBar(len(new_chatids), "interacted-with-matches")
 			for index, chatid in enumerate(new_chatids):
-				matches.append(self.get_match(chatid, quickload))
+				matches.append(self.get_match(chatid))
 				loadingbar.update_loading(index)
 			print("\n")
 

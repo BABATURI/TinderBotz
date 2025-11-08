@@ -11,7 +11,6 @@ from selenium.webdriver.common.keys import Keys
 
 from tinderbotz.helpers.constants_helper import Printouts
 from tinderbotz.helpers.geomatch import Geomatch
-from tinderbotz.helpers.match import Match
 from tinderbotz.helpers.storage_helper import StorageHelper
 
 BOT_NAME = "BaseBot"
@@ -208,17 +207,17 @@ class BaseSession:
 			time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
 		return True
 
-	def get_geomatch(self, quickload=True) -> Geomatch:
+	def get_geomatch(self) -> Geomatch:
 		# get current match
 		raise NotImplementedError()
 
 	def get_chat_ids(self, new=True, messaged=True):
 		raise NotImplementedError()
 
-	def get_new_matches(self, amount=100000, quickload=True):
+	def get_new_matches(self, amount=100000):
 		raise NotImplementedError()
 
-	def get_messaged_matches(self, amount=100000, quickload=True):
+	def get_messaged_matches(self, amount=100000):
 		raise NotImplementedError()
 
 	def send_message(self, chatid, message):

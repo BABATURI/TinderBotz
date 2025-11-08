@@ -39,9 +39,8 @@ def get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dict[
 
 
 def main() -> None:
-	# creates instance of session
 	session = Session()
-	location = (32.15792931573261, 34.84213125060156)
+	location: Tuple[float, float] = (32.15792931573261, 34.84213125060156)
 	session.set_custom_location(latitude=location[0], longitude=location[1])
 
 	session.wait_for_login()
@@ -50,7 +49,7 @@ def main() -> None:
 
 	for _ in range(10):
 		# get profile data (name, age, bio, images, ...)
-		geomatch: Geomatch = session.get_geomatch(quickload=False)
+		geomatch: Geomatch = session.get_geomatch()
 		# store this data locally as json with reference to their respective (locally stored) images
 		session.store_local(geomatch)
 		# Use the dating agent to decide whether to like or dislike this profile

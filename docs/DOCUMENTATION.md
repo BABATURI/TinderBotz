@@ -218,23 +218,13 @@ matches = new_matches + old_matches
 ```
 **Optional parameters**</br>
 `amount`: *amount*</br>
-`quickload`: *boolean*</br>
 
 **Example usage**</br>
 ```
-new_matches = session.get_new_matches(amount=100, quickload=True)    
-old_matches = session.get_messaged_matches(amount=15, quickload=False)
+new_matches = session.get_new_matches(amount=100)    
+old_matches = session.get_messaged_matches(amount=15)
 ```
 By default, all new and messaged matches are being loaded, although quite often it's more interesting to load only a handful matches. The amount of matches you want to fetch can be adjusted by specifying the amount of matches.</br>
-
-**Note**: **quickload** is **True** by default when no parameter is passed. This makes sure the loading happens two times faster while still getting most of the information, but only ***a few images*** of the match are loaded. </br>
-However when **quickload** is **False**, ***ALL images*** of the match are loaded.</br>
-
-**Note**: When quickload is **False**, loading your matches might take a while depending on how many matches you have.</br>
-This is because the session will iterate through every match and all their images one by one.</br>
-
-Another option, besides quickloading, to reduce loading time is to store these matches at the first run as illustrated here: [Storing (geo)Matches](#storing-geomatches)</br>
-and then load them from there in future runs.</br>
 
 ## Getting Geomatches
 Get data *name, age, bio, distance, home, study, passions, images...* of the displayed geomatch and store it inside an object of the [class Geomatch()](https://github.com/frederikme/TinderBotz/blob/master/tinderbotz/helpers/geomatch.py).
@@ -242,10 +232,6 @@ Get data *name, age, bio, distance, home, study, passions, images...* of the dis
 geomatch = session.get_geomatch()
 ```
 **Optional parameters**</br>
-`quickload`: *boolean*</br>
-
-**Note**: **quickload** is **True** by default when no parameter is passed. This makes sure the loading happens two times faster while still getting most of the information, but only ***a few images*** of the geomatch are loaded. </br>
-However when **quickload** is **False**, ***ALL images*** of the geomatch are loaded.</br>
 
 ## Storing (geo)Matches
 Every profile, also known as a (geo)match, can be stored locally. </br>

@@ -9,7 +9,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from tinderbotz.basebot import BaseSession
 from tinderbotz.helpers.email_helper import EmailHelper
-# Tinderbotz: helper classes
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.geomatch_helper import GeomatchHelper
 from tinderbotz.helpers.match_helper import MatchHelper
@@ -88,7 +87,7 @@ class Session(BaseSession):
 			print("User is not logged in yet.\n")
 			return False
 
-	def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
+	def get_geomatch(self) -> Optional[Geomatch]:
 		if not self._is_logged_in():
 			return None
 
@@ -104,18 +103,18 @@ class Session(BaseSession):
 			return helper.get_chat_ids(new, messaged)
 		return None
 
-	def get_new_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
+	def get_new_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
 		if self._is_logged_in():
 			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
-			return helper.get_new_matches(amount, quickload)
+			return helper.get_new_matches(amount)
 		return None
 
-	def get_messaged_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
+	def get_messaged_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
 		if self._is_logged_in():
 			helper: MatchHelper = MatchHelper(browser=self.browser)
 			self._handle_potential_popups()
-			return helper.get_messaged_matches(amount, quickload)
+			return helper.get_messaged_matches(amount)
 		return None
 
 	def send_message(self, chatid: str, message: str) -> None:
