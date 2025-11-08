@@ -12,8 +12,6 @@ from tinderbotz.helpers.constants_helper import Printouts
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.storage_helper import StorageHelper
 
-BOT_NAME = "BaseBot"
-
 
 class BaseSession:
     def __init__(self, headless=False, store_session=True, user_data=False):
@@ -89,6 +87,7 @@ class BaseSession:
 
         # print out the statistics of the session
         try:
+            BOT_NAME: str = 'BaseBot'
             box = self._get_msg_box(lines=lines, title=BOT_NAME)
             print(box)
         finally:
