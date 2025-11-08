@@ -114,7 +114,7 @@ class BumbleSession(BaseSession):
             # should be only one img
             name: str = story_content.find_element(By.XPATH, name_xpath).text
             age: str = story_content.find_element(By.XPATH, age_xpath).text
-            work: str = story_content.find_elements(By.XPATH, work_xpath)
+            work: List[WebElement] = story_content.find_elements(By.XPATH, work_xpath)
 
             if "," in age:
                 age = age.split(", ")[1]
@@ -188,39 +188,21 @@ class BumbleSession(BaseSession):
         return geomatch
 
     def get_chat_ids(self, new: bool = True, messaged: bool = True) -> Optional[List[str]]:
-        if not self._is_logged_in():
-            return
-        # helper: MatchHelper = MatchHelper(browser=self.browser)
-        # self._handle_potential_popups()
-        # return helper.get_chat_ids(new, messaged)
-        return None
+        # todo implement
+        raise NotImplementedError()
 
     def get_new_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
-        if not self._is_logged_in():
-            return
-        # helper: MatchHelper = MatchHelper(browser=self.browser)
-        # self._handle_potential_popups()
-        # return helper.get_new_matches(amount, quickload)
-        return None
+        # todo implement
+        raise NotImplementedError()
 
     def get_messaged_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
-        if not self._is_logged_in():
-            return
-        # helper: MatchHelper = MatchHelper(browser=self.browser)
-        # self._handle_potential_popups()
-        # return helper.get_messaged_matches(amount, quickload)
-        return None
+        # todo implement
+        raise NotImplementedError()
 
     def send_message(self, chatid: str, message: str) -> None:
-        if not self._is_logged_in():
-            return
-            helper: MatchHelper = MatchHelper(browser=self.browser)
-            self._handle_potential_popups()
-            helper.send_message(chatid, message)
+        # todo implement
+        raise NotImplementedError()
 
     def unmatch(self, chatid: str) -> None:
-        if not self._is_logged_in():
-            return
-            helper: MatchHelper = MatchHelper(browser=self.browser)
-            self._handle_potential_popups()
-            helper.unmatch(chatid)
+        # todo implement
+        raise NotImplementedError()

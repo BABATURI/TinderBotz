@@ -4,7 +4,9 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 
-from tinderbotz.session import Session, Geomatch
+from tinderbotz.base_session import BaseSession
+from tinderbotz.bumble_session import BumbleSession
+from tinderbotz.tinder_session import TinderSession, Geomatch
 from dating_llm.agent import *
 
 
@@ -39,8 +41,8 @@ def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dic
     return ai_json_response
 
 
-def __perform_round(max_likes: int = 30, max_swipes: int = 60) -> None:
-    with Session() as session:
+def __perform_round(unentered_base_session: BaseSession, max_likes: int = 30, max_swipes: int = 60) -> None:
+    with unentered_base_session as session:
         location: Tuple[float, float] = (32.15792931573261, 34.84213125060156)
         session.set_custom_location(latitude=location[0], longitude=location[1])
 
@@ -79,7 +81,8 @@ def main() -> None:
             time.sleep(MIN_HOUR_FOR_SWIPING - datetime.now().hour)
 
         try:
-            __perform_round(1, 3)
+            __perform_round(BumbleSession(), 1, 3)
+            __perform_round(TinderSession(), 1, 3)
         except Exception as e:
             print(f"got exception {e}")
 

@@ -17,7 +17,7 @@ from tinderbotz.helpers.profile_helper import ProfileHelper
 from tinderbotz.helpers.xpaths import *
 
 
-class Session(BaseSession):
+class TinderSession(BaseSession):
     HOME_URL: str = "https://www.tinder.com/app/recs"
     app_name: str = "tinder"
     app_logged_in_match: str = "tinder.com/app"
