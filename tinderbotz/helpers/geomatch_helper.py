@@ -1,5 +1,6 @@
 import re
 import time
+import logging
 from typing import Optional, Dict, Any, List
 
 import undetected_chromedriver as uc
@@ -14,6 +15,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.geomatch_svg_mapper import SvgPaths
 from tinderbotz.helpers.xpaths import content
+
+
+logger = logging.getLogger(__file__)
 
 
 class GeomatchHelper:
@@ -31,7 +35,7 @@ class GeomatchHelper:
             WebDriverWait(self.browser, 20.0).until(EC.presence_of_element_located(
                 (By.XPATH, "//div[@class='Bdrs(8px) Bgz(cv) Bgp(c) StretchedBox']")))
         except Exception:
-            pass
+            raise
 
     def like(self) -> bool:
         try:
@@ -190,7 +194,7 @@ class GeomatchHelper:
             # check for messages
             if len(li.find_elements(By.TAG_NAME, 'a')) > 0:
                 continue
-            print(li.text)
+            logger.debug(li.text)
             # special case for interests:
             try:
                 interest: WebElement = li.find_element(By.XPATH, ".//div/span")
@@ -279,10 +283,10 @@ class GeomatchHelper:
                 continue
 
             images.append(self.__extract_image_url(outer_html))
-
+            # print(images)
             action: ActionChains = ActionChains(self.browser)
             action.send_keys(Keys.SPACE).perform()
-            time.sleep(1)
+            time.sleep(0.33)
 
         return images
 
