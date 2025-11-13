@@ -7,6 +7,7 @@ from dataclasses import asdict
 
 from tinderbotz.base_session import BaseSession
 from tinderbotz.bumble_session import BumbleSession
+from tinderbotz.okcupid_session import OkCupidSession
 from tinderbotz.helpers.bot_settings import BotSettings
 from tinderbotz.tinder_session import TinderSession, Geomatch
 from dating_llm.agent import *
@@ -76,7 +77,7 @@ def __perform_round(unentered_base_session: BaseSession, settings: BotSettings) 
     max_swipes = settings.max_swipes_per_session
     
     with unentered_base_session as session:
-        location: Tuple[float, float] = (32.15792931573261, 34.84213125060156)
+        location: Tuple[float, float] = settings.location
         session.set_custom_location(latitude=location[0], longitude=location[1])
 
         session.wait_for_login()
@@ -109,8 +110,9 @@ def main() -> None:
     # todo- handle no more likes left/no options are left
     settings = __load_bot_settings()
     sessions = [
-        BumbleSession(),
-        TinderSession()
+        # BumbleSession(),
+        # TinderSession(),
+        OkCupidSession(),
     ]
     while True:
         if datetime.now().hour < settings.active_hours_start:
