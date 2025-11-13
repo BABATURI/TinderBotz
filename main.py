@@ -1,13 +1,30 @@
 import json
 import time
-from dataclasses import asdict
-from datetime import datetime
+import traceback
 from pathlib import Path
+from datetime import datetime
+from dataclasses import asdict
 
 from tinderbotz.base_session import BaseSession
 from tinderbotz.bumble_session import BumbleSession
+from tinderbotz.helpers.bot_settings import BotSettings
 from tinderbotz.tinder_session import TinderSession, Geomatch
 from dating_llm.agent import *
+
+
+def __sleep_until(hour: int, minute: int) -> None:
+    now = datetime.datetime.now()
+    target_time = datetime.datetime(now.year, now.month, now.day, hour, minute)
+
+    # If the target time is in the past, set it for the next day
+    if now > target_time:
+        target_time += datetime.timedelta(days=1)
+    else:
+        return
+
+    sleep_duration = (target_time - now).total_seconds()
+
+    time.sleep(sleep_duration)
 
 
 def __create_dating_agent() -> DatingLLM:
@@ -19,6 +36,19 @@ def __create_dating_agent() -> DatingLLM:
             user_pref = f.read()
 
     return DatingLLM(user_pref)
+
+
+def __load_bot_settings() -> BotSettings:
+    settings_path = Path("configuration", "bot_settings.json")
+    if settings_path.exists():
+        with open(settings_path, "r") as f:
+            return BotSettings(**json.load(f))
+    else:
+        # create default settings file
+        default_settings = BotSettings()
+        with open(settings_path, "w") as f:
+            json.dump(asdict(default_settings), f, indent=4)
+        return default_settings
 
 
 def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dict[str, Any]:
@@ -41,7 +71,10 @@ def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dic
     return ai_json_response
 
 
-def __perform_round(unentered_base_session: BaseSession, max_likes: int = 30, max_swipes: int = 60) -> None:
+def __perform_round(unentered_base_session: BaseSession, settings: BotSettings) -> None:
+    max_likes = settings.max_likes_per_session
+    max_swipes = settings.max_swipes_per_session
+    
     with unentered_base_session as session:
         location: Tuple[float, float] = (32.15792931573261, 34.84213125060156)
         session.set_custom_location(latitude=location[0], longitude=location[1])
@@ -74,21 +107,30 @@ def __perform_round(unentered_base_session: BaseSession, max_likes: int = 30, ma
 
 def main() -> None:
     # todo- handle no more likes left/no options are left
+    settings = __load_bot_settings()
+    sessions = [
+        BumbleSession(),
+        TinderSession()
+    ]
     while True:
-        MIN_HOUR_FOR_SWIPING: int = 10
+        if datetime.now().hour < settings.active_hours_start:
+            __sleep_until(settings.active_hours_start, 0)
+            
+        elif datetime.now().hour >= settings.active_hours_end:
+            # sleep until the next day, then start again
+            __sleep_until(23, 59)
+            time.sleep(61)
+            continue
 
-        if datetime.now().hour < MIN_HOUR_FOR_SWIPING:
-            time.sleep(MIN_HOUR_FOR_SWIPING - datetime.now().hour)
-
-        try:
-            __perform_round(BumbleSession(), 1, 3)
-            __perform_round(TinderSession(), 1, 3)
-        except Exception as e:
-            print(f"got exception {e}")
+        for session in sessions:
+            try:
+                __perform_round(session, settings)
+            except Exception as e:
+                print(f"got exception {e}")
+                traceback.print_exc()
 
         print("Sleeping till next session")
-        ONE_HOUR_IN_SECS: int = 60 * 60
-        time.sleep(ONE_HOUR_IN_SECS)
+        time.sleep(settings.sleep_time)
 
 
 if __name__ == "__main__":

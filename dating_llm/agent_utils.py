@@ -19,7 +19,7 @@ def get_image_data(url: str) -> bytes:
                     backoff_factor=0.3,
                     status_forcelist=[ 500, 502, 503, 504 ])
     s.mount('https://', HTTPAdapter(max_retries=retries))
-    print(url)
+    # print(url)
     for _ in range(5):
         try:
             resp = s.get(url, timeout=3)

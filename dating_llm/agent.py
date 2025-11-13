@@ -44,7 +44,7 @@ class DatingLLM:
     def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:
         try:
             return self._run_llm(profile_bio, images_urls)
-        except genai.errors.ClientError:
+        except (genai.errors.ClientError, genai.errors.ServerError):
             print("Switching model and retrying...")
             self._model_idx = (self._model_idx + 1) % len(self.model_list)
         return self._run_llm(profile_bio, images_urls)
