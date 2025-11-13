@@ -4,14 +4,32 @@ from typing import Dict, Any
 
 import requests
 
+from requests.adapters import HTTPAdapter, Retry
+from requests.exceptions import ReadTimeout
+
 from PIL import Image
 
 
 def get_image_data(url: str) -> bytes:
-    resp = requests.get(url, timeout=10)
+    if url == "":
+        return b''
+    
+    s = requests.Session()
+    retries = Retry(total=5,
+                    backoff_factor=0.3,
+                    status_forcelist=[ 500, 502, 503, 504 ])
+    s.mount('https://', HTTPAdapter(max_retries=retries))
+    print(url)
+    for _ in range(5):
+        try:
+            resp = s.get(url, timeout=3)
+            break
+        except Exception:
+            pass
+    s.close()
+
     resp.raise_for_status()
     orig_bytes: bytes = resp.content
-
     try:
         img: Image.Image = Image.open(io.BytesIO(orig_bytes))
         # Resize if larger than max dimension
@@ -25,7 +43,7 @@ def get_image_data(url: str) -> bytes:
         # Preserve alpha by using PNG, otherwise compress to JPEG
 
         img = img.convert("RGB")
-        img.save(out, format="JPEG", quality=70, optimize=True, progressive=True)
+        img.save(out, format="JPEG", quality=80, optimize=True, progressive=True)
 
         img_data: bytes = out.getvalue()
         out.close()
