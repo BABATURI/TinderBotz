@@ -27,6 +27,10 @@ class OkCupidSession(BaseSession):
     def app_url(self):
         return "https://www.okcupid.com/discover"
 
+    @property
+    def does_support_message_on_like(self) -> bool:
+        return True
+
     def _is_logged_in(self) -> bool:
         # make sure cupid website is loaded for the first time
         if self.app_logged_in_match not in self.browser.current_url:
@@ -51,12 +55,16 @@ class OkCupidSession(BaseSession):
         if randomize_sleep:
             time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
 
-    def like(self, randomize_sleep=True):
-        like_btn = self.browser.find_element(By.XPATH,
-                                             "//button[@class='dt-action-buttons-button like']")
-        like_btn.click()
-        if randomize_sleep:
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+    def like(self, randomize_sleep=True, message: Optional[str] = None):
+        if not message:
+            like_btn = self.browser.find_element(By.XPATH,
+                                                 "//button[@class='dt-action-buttons-button like']")
+            like_btn.click()
+            if randomize_sleep:
+                time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+        else:
+            # todo implement (get message from llm in main)
+            raise NotImplementedError()
 
         self._handle_potential_popups()
 

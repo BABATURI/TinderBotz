@@ -75,7 +75,7 @@ def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dic
 def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
     max_likes = settings.max_likes_per_session
     max_swipes = settings.max_swipes_per_session
-    
+
     location: Tuple[float, float] = settings.location
     active_session.set_custom_location(latitude=location[0], longitude=location[1])
 
@@ -95,12 +95,13 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
         decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, geomatch)
 
         print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
-        if decision_json["decision"] == "like":
-            active_session.like()
-            likes_cnt += 1
-        else:
+        if decision_json["decision"] == "dislike":
             active_session.dislike()
 
+        active_session.like(
+            message=decision_json["like_message"] if active_session.does_support_message_on_like else None)
+
+        likes_cnt += 1
         if likes_cnt == max_likes:
             return
 
@@ -116,7 +117,7 @@ def main() -> None:
     while True:
         if datetime.now().hour < settings.active_hours_start:
             __sleep_until(settings.active_hours_start, 0)
-            
+
         elif datetime.now().hour >= settings.active_hours_end:
             # sleep until the next day, then start again
             __sleep_until(23, 59)

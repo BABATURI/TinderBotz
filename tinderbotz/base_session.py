@@ -102,6 +102,10 @@ class BaseSession:
     def app_url(self) -> str:
         raise NotImplementedError()
 
+    @property
+    def does_support_message_on_like(self) -> bool:
+        return False
+
     def set_custom_location(self, latitude, longitude, accuracy="100%"):
 
         params = {
@@ -130,7 +134,10 @@ class BaseSession:
         filename: str = match.match_type
         StorageHelper.store_match(match, directory=os.path.join("data", filename), filename=filename)
 
-    def like(self, randomize_sleep=True):
+    def like(self, randomize_sleep=True, message: Optional[str] = None):
+        if message:
+            raise NotImplementedError()
+
         # base option, can be overwritten
         if not self._is_logged_in():
             return

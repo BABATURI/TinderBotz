@@ -17,7 +17,8 @@ class DatingLLM:
     The output should be a JSON object with the following fields:
     {{
         "decision": "like" or "dislike",
-        "reason": "a brief explanation of the decision"
+        "reason": "a brief explanation of the decision",
+        "like_message": "first message in hebrew to send to the girl. should be short and engaging"
     }}
     """
     model_list: List[str] = [
