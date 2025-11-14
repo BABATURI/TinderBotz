@@ -17,7 +17,7 @@ from tinderbotz.helpers.email_helper import EmailHelper
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.tinder_svg_mapper import TinderSvgPaths
 from tinderbotz.helpers.tinder_match_helper import TinderMatchHelper
-from tinderbotz.helpers.preferences_helper import PreferencesHelper
+from tinderbotz.helpers.tinder_preferences_helper import TinderPreferencesHelper
 from tinderbotz.helpers.profile_helper import ProfileHelper
 from tinderbotz.helpers.xpaths import *
 
@@ -53,25 +53,25 @@ class TinderSession(BaseSession):
     def set_distance_range(self, km: int) -> None:
         assert self._is_logged_in()
 
-        helper = PreferencesHelper(browser=self.browser)
+        helper = TinderPreferencesHelper(browser=self.browser)
         helper.set_distance_range(km)
 
     def set_age_range(self, min: int, max: int) -> None:
         assert self._is_logged_in()
 
-        helper = PreferencesHelper(browser=self.browser)
+        helper = TinderPreferencesHelper(browser=self.browser)
         helper.set_age_range(min, max)
 
     def set_sexuality(self, type: str) -> None:
         assert self._is_logged_in()
 
-        helper = PreferencesHelper(browser=self.browser)
+        helper = TinderPreferencesHelper(browser=self.browser)
         helper.set_sexualitiy(type)
 
     def set_global(self, boolean: bool) -> None:
         assert self._is_logged_in()
 
-        helper = PreferencesHelper(browser=self.browser)
+        helper = TinderPreferencesHelper(browser=self.browser)
         helper.set_global(boolean)
 
     def set_bio(self, bio: str) -> None:

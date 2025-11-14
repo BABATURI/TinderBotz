@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from tinderbotz.helpers.constants_helper import Sexuality
 
 
-class PreferencesHelper:
+class TinderPreferencesHelper:
     delay = 5
 
     HOME_URL = "https://www.tinder.com/app/profile"
