@@ -72,38 +72,37 @@ def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dic
     return ai_json_response
 
 
-def __perform_round(unentered_base_session: BaseSession, settings: BotSettings) -> None:
+def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
     max_likes = settings.max_likes_per_session
     max_swipes = settings.max_swipes_per_session
     
-    with unentered_base_session as session:
-        location: Tuple[float, float] = settings.location
-        session.set_custom_location(latitude=location[0], longitude=location[1])
+    location: Tuple[float, float] = settings.location
+    active_session.set_custom_location(latitude=location[0], longitude=location[1])
 
-        session.wait_for_login()
+    active_session.wait_for_login()
 
-        dating_agent: DatingLLM = __create_dating_agent()
+    dating_agent: DatingLLM = __create_dating_agent()
 
-        likes_cnt: int = 0
+    likes_cnt: int = 0
 
-        for _ in range(max_swipes):
-            # get profile data (name, age, bio, images, ...)
-            geomatch: Geomatch = session.get_geomatch()
-            # store this data locally as json with reference to their respective (locally stored) images
-            session.store_local(geomatch)
-            # Use the dating agent to decide whether to like or dislike this profile
-            print("running dating LLM query...")
-            decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, geomatch)
+    for _ in range(max_swipes):
+        # get profile data (name, age, bio, images, ...)
+        geomatch: Geomatch = active_session.get_geomatch()
+        # store this data locally as json with reference to their respective (locally stored) images
+        active_session.store_local(geomatch)
+        # Use the dating agent to decide whether to like or dislike this profile
+        print("running dating LLM query...")
+        decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, geomatch)
 
-            print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
-            if decision_json["decision"] == "like":
-                session.like()
-                likes_cnt += 1
-            else:
-                session.dislike()
+        print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
+        if decision_json["decision"] == "like":
+            active_session.like()
+            likes_cnt += 1
+        else:
+            active_session.dislike()
 
-            if likes_cnt == max_likes:
-                return
+        if likes_cnt == max_likes:
+            return
 
 
 def main() -> None:
@@ -126,7 +125,8 @@ def main() -> None:
 
         for session in sessions:
             try:
-                __perform_round(session, settings)
+                with session as active_session:
+                    __perform_round(active_session, settings)
             except Exception as e:
                 print(f"got exception {e}")
                 traceback.print_exc()

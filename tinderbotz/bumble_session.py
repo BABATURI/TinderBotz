@@ -26,7 +26,7 @@ class BumbleSession(BaseSession):
         return "https://bumble.com/app"
 
     def _is_logged_in(self) -> bool:
-        # make sure tinder website is loaded for the first time
+        # make sure bumble website is loaded for the first time
         if not self.app_logged_in_match in self.browser.current_url:
             # enforce english language
             self.browser.get(self.app_url)

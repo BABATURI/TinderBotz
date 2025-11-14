@@ -1,15 +1,14 @@
-import json
-import random
 import logging
+import random
 import time
 from typing import List, Optional
 
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
+from undetected_chromedriver import WebElement
 
 from tinderbotz.base_session import BaseSession
 from tinderbotz.helpers.geomatch import Geomatch
@@ -29,15 +28,20 @@ class OkCupidSession(BaseSession):
         return "https://www.okcupid.com/discover"
 
     def _is_logged_in(self) -> bool:
-        # make sure tinder website is loaded for the first time
-        if not self.app_logged_in_match in self.browser.current_url:
+        # make sure cupid website is loaded for the first time
+        if self.app_logged_in_match not in self.browser.current_url:
             self.browser.get(self.app_url)
-            time.sleep(5)
+            time.sleep(10)
+            print(f'slept 5 secs')
 
-        if self.app_logged_in_match in self.browser.current_url:
+        try:
+            xpath = '//*[@id="stack-menu-item-JUST_FOR_YOU"]/span'
+            WebDriverWait(self.browser, 5).until(
+                EC.presence_of_element_located((By.XPATH, xpath)))
             return True
-        else:
-            print("User is not logged in yet.\n")
+        except:
+            print("User is not logged in okcupid yet.\n")
+
             return False
 
     def dislike(self, randomize_sleep=True):
@@ -53,6 +57,8 @@ class OkCupidSession(BaseSession):
         like_btn.click()
         if randomize_sleep:
             time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+
+        self.__handle_optional_super_like_popup()
     
     def superlike(self, randomize_sleep=True):
         superlike_btn = self.browser.find_element(By.XPATH,
@@ -96,6 +102,7 @@ class OkCupidSession(BaseSession):
         # get pics
         urls = []
         first_photo_div = self.browser.find_element(By.XPATH, "//div[@class='dt-photo dt-photo-superlikes']")
+        # todo- handle selenium.common.exceptions.ElementNotInteractableException
         first_photo_div.click_safe()
         #     wait for img elements to load
         time.sleep(1)
@@ -150,3 +157,14 @@ class OkCupidSession(BaseSession):
     def unmatch(self, chatid: str) -> None:
         # todo implement
         raise NotImplementedError()
+
+    def __handle_optional_super_like_popup(self):
+        LIKE_THEM_ANYWAY_XPATH: str = '//*[@id="BaseModal"]/button[2]'
+
+        elements: List[WebElement] = self.browser.find_elements(By.XPATH, LIKE_THEM_ANYWAY_XPATH)
+
+        for element in elements:
+            if element.text == 'LIKE THEM ANYWAY':
+                element.click()
+                return
+
