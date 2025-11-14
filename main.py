@@ -97,13 +97,12 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
         print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
         if decision_json["decision"] == "dislike":
             active_session.dislike()
-
-        active_session.like(
-            message=decision_json["like_message"] if active_session.does_support_message_on_like else None)
-
-        likes_cnt += 1
-        if likes_cnt == max_likes:
-            return
+        else:
+            active_session.like(
+                message=decision_json["like_message"] if active_session.does_support_message_on_like else None)
+            likes_cnt += 1
+            if likes_cnt == max_likes:
+                return
 
 
 def main() -> None:
@@ -112,7 +111,7 @@ def main() -> None:
     sessions = [
         BumbleSession(),
         TinderSession(),
-        OkCupidSession(),
+        # OkCupidSession(),
     ]
     while True:
         if datetime.now().hour < settings.active_hours_start:
