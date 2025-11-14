@@ -249,7 +249,10 @@ class TinderSession(BaseSession):
 
         list_items: List[WebElement] = self.browser.find_elements(By.TAG_NAME, "li")
         for li in list_items:
-            if li.text == '':
+            try:
+                if li.text == '':
+                    continue
+            except:
                 continue
             # check for messages
             if len(li.find_elements(By.TAG_NAME, 'a')) > 0:
