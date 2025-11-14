@@ -8,13 +8,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from tinderbotz.helpers.constants_helper import Socials
-from tinderbotz.helpers.geomatch_svg_mapper import SvgPaths
 from tinderbotz.helpers.loadingbar import LoadingBar
 from tinderbotz.helpers.match import Match
+from tinderbotz.helpers.tinder_svg_mapper import TinderSvgPaths
 from tinderbotz.helpers.xpaths import content, modal_manager
 
 
-class MatchHelper:
+class TinderMatchHelper:
     delay = 5
 
     HOME_URL = "https://tinder.com/app/recs"
@@ -457,15 +457,15 @@ class MatchHelper:
         for row in rows:
             svg = row.find_element(By.XPATH, ".//*[starts-with(@d, 'M')]").get_attribute('d')
             value = row.find_element(By.XPATH, ".//div[2]").text
-            if svg == SvgPaths.WORK_SVG_PATH:
+            if svg == TinderSvgPaths.WORK_SVG_PATH:
                 match.work = value
-            if svg == SvgPaths.STUDYING_SVG_PATH:
+            if svg == TinderSvgPaths.STUDYING_SVG_PATH:
                 match.study = value
-            if svg == SvgPaths.HOME_SVG_PATH:
+            if svg == TinderSvgPaths.HOME_SVG_PATH:
                 match.home = value.split(' ')[-1]
-            if svg == SvgPaths.GENDER_SVG_PATH:
+            if svg == TinderSvgPaths.GENDER_SVG_PATH:
                 match.gender = value
-            if svg == SvgPaths.LOCATION_SVG_PATH or svg == SvgPaths.LOCATION_SVG_PATH2:
+            if svg == TinderSvgPaths.LOCATION_SVG_PATH or svg == TinderSvgPaths.LOCATION_SVG_PATH2:
                 distance = value.split(' ')[0]
                 try:
                     distance = int(distance)

@@ -109,8 +109,8 @@ def main() -> None:
     # todo- handle no more likes left/no options are left
     settings = __load_bot_settings()
     sessions = [
-        # BumbleSession(),
-        # TinderSession(),
+        BumbleSession(),
+        TinderSession(),
         OkCupidSession(),
     ]
     while True:

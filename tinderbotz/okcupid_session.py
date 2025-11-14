@@ -46,20 +46,20 @@ class OkCupidSession(BaseSession):
 
     def dislike(self, randomize_sleep=True):
         dislike_btn = self.browser.find_element(By.XPATH,
-                                                  "//button[@class='dt-action-buttons-button pass']")
+                                                "//button[@class='dt-action-buttons-button pass']")
         dislike_btn.click()
         if randomize_sleep:
             time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
-            
+
     def like(self, randomize_sleep=True):
         like_btn = self.browser.find_element(By.XPATH,
-                                                  "//button[@class='dt-action-buttons-button like']")
+                                             "//button[@class='dt-action-buttons-button like']")
         like_btn.click()
         if randomize_sleep:
             time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
 
-        self.__handle_optional_super_like_popup()
-    
+        self._handle_potential_popups()
+
     def superlike(self, randomize_sleep=True):
         superlike_btn = self.browser.find_element(By.XPATH,
                                                   "//div[@class='superlike-button-object']")
@@ -68,21 +68,27 @@ class OkCupidSession(BaseSession):
             time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
 
     def _handle_potential_popups(self):
-        # TODO: fill in here
-        return
-    
+        LIKE_THEM_ANYWAY_XPATH: str = '//*[@id="BaseModal"]/button[2]'
+
+        elements: List[WebElement] = self.browser.find_elements(By.XPATH, LIKE_THEM_ANYWAY_XPATH)
+
+        for element in elements:
+            if element.text == 'LIKE THEM ANYWAY':
+                element.click()
+                return
+
     def _get_user_id(self) -> str:
         div = self.browser.find_element(By.XPATH, "//div[@class='desktop-dt-wrapper']")
-        user_id = div.get_attribute("data-user-id") 
+        user_id = div.get_attribute("data-user-id")
         return user_id
-    
+
     def _format_row_data(self, raw_text: str) -> List[str]:
         return [p for p in raw_text.split(' | ') if p]
-    
+
     def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
         if not self._is_logged_in():
             return None
-        
+
         name_xpath = "//h2[@class='card-content-header__text']"
         WebDriverWait(self.browser, 5).until(
             EC.presence_of_element_located((By.XPATH, name_xpath)))
@@ -106,7 +112,8 @@ class OkCupidSession(BaseSession):
         first_photo_div.click_safe()
         #     wait for img elements to load
         time.sleep(1)
-        for img in self.browser.find_elements(By.XPATH, "//img[@class='fade-in-transition-300 fade-in-transition-ease fade-in-transition-appear-done fade-in-transition-enter-done']"):
+        for img in self.browser.find_elements(By.XPATH,
+                                              "//img[@class='fade-in-transition-300 fade-in-transition-ease fade-in-transition-appear-done fade-in-transition-enter-done']"):
             img_url = img.get_attribute("src")
             urls.append(img_url)
             time.sleep(0.25)
@@ -122,9 +129,9 @@ class OkCupidSession(BaseSession):
             category = div_class.split("matchprofile-details-section--")[1]
             if category == "wiw":
                 category = "looking_for"
-            
+
             rowdata[category] = div.text  # maybe get child divs text
-           
+
         # TODO: promtps - press a button to expand prompts? parse them them go back a page
         m = Geomatch(
             name=name, age=age, home=location,
@@ -157,14 +164,3 @@ class OkCupidSession(BaseSession):
     def unmatch(self, chatid: str) -> None:
         # todo implement
         raise NotImplementedError()
-
-    def __handle_optional_super_like_popup(self):
-        LIKE_THEM_ANYWAY_XPATH: str = '//*[@id="BaseModal"]/button[2]'
-
-        elements: List[WebElement] = self.browser.find_elements(By.XPATH, LIKE_THEM_ANYWAY_XPATH)
-
-        for element in elements:
-            if element.text == 'LIKE THEM ANYWAY':
-                element.click()
-                return
-

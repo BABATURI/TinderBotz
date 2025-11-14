@@ -27,7 +27,7 @@ class PreferencesHelper:
             pass
 
     def set_distance_range(self, km):
-        # correct out of bounds values
+        # correct out-of-bounds values
         if km > 160:
             final_percentage = 100
         elif km < 2:
@@ -82,7 +82,7 @@ class PreferencesHelper:
         min_age_tinder = int(btn_maxage.get_attribute('aria-valuemin'))
         max_age_tinder = int(btn_maxage.get_attribute('aria-valuemax'))
 
-        # correct out of bounds values
+        # correct out-of-bounds values
         if min < min_age_tinder:
             min = min_age_tinder
 
