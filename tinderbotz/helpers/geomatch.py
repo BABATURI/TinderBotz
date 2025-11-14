@@ -2,7 +2,7 @@ import json
 import random
 import string
 from dataclasses import asdict, dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Dict
 
 
 @dataclass
@@ -22,7 +22,7 @@ class Geomatch:
     instagram: Optional[str] = None
     image_urls: List[str] = field(default_factory=list)
     listening: List[Any] = field(default_factory=list)
-    prompts: List[str] = field(default_factory=list)
+    prompts: Dict[str, str] = field(default_factory=list)
     id: str = field(init=False)
 
     @property

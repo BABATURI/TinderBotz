@@ -8,3 +8,5 @@
 - support sending messages with likes in cupid
 - set min browser size 
 - extract the q&a in cupid
+- save all prompts in bumble
+- cupid: extract all info (kosher etc)

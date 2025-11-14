@@ -133,7 +133,7 @@ class BumbleSession(BaseSession):
     def _parse_prompts(self, story_content: WebElement, geomatch: Geomatch) -> bool:
         q_xpath = ".//div[@class='encounters-story-section__heading-title']"
         a_xpath = ".//div[@class='encounters-story-section__content']"
-        prompts = []
+        prompts = {}
         try:
             # should be only one prompt
             story_content.find_element(By.XPATH,
@@ -143,8 +143,10 @@ class BumbleSession(BaseSession):
             value: str = story_content.find_element(By.XPATH, a_xpath).find_element(By.TAG_NAME, "p").get_attribute(
                 "innerHTML")
 
-            prompts.append((pname, value))
-            # TODO: add to geomatch
+            prompts[pname] = value
+
+            # todo extract all prompts
+            geomatch.prompts = prompts
             return True
         except:
             return False

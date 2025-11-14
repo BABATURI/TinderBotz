@@ -1,7 +1,7 @@
 import logging
 import random
 import time
-from typing import List, Optional
+from typing import List, Optional, Tuple, Dict
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
@@ -71,6 +71,9 @@ class OkCupidSession(BaseSession):
 
             SEND_MESSAGE_XPATH: str = '//*[@id="OkModal"]/div[1]/div/div/div/div[3]/button'
             self.browser.find_element(By.XPATH, SEND_MESSAGE_XPATH).click()
+
+            WAIT_FOR_BOX_TO_DISAPPEAR: int = 1
+            time.sleep(WAIT_FOR_BOX_TO_DISAPPEAR)
 
         self._handle_potential_popups()
 
@@ -159,6 +162,7 @@ class OkCupidSession(BaseSession):
             looking_for=rowdata.get("looking_for", ""),
             passions=rowdata.get("passions", ""),
             bio=bio,
+            prompts=self.__get_prompts()
         )
         m.id = self.__get_user_id()
         return m
@@ -182,3 +186,23 @@ class OkCupidSession(BaseSession):
     def unmatch(self, chatid: str) -> None:
         # todo implement
         raise NotImplementedError()
+
+    def __get_prompts(self) -> Dict[str, str]:
+        prompts: Dict[str, str] = {}
+
+        idx: int = 1
+        while True:
+            PROMPT_QUESTION_XPATH: str = f'//*[@id="quickmatch-aria-tabpanel"]/div/div/div[2]/div[{idx}]/h3'
+            question_elements: List[WebElement] = self.browser.find_elements(By.XPATH, PROMPT_QUESTION_XPATH)
+
+            PROMPT_ANSWER_XPATH: str = f'//*[@id="quickmatch-aria-tabpanel"]/div/div/div[2]/div[{idx}]/div/div/span'
+            answer_elements: List[WebElement] = self.browser.find_elements(By.XPATH, PROMPT_ANSWER_XPATH)
+
+            if len(question_elements) == 0 or len(answer_elements) == 0:
+                break
+
+            prompts[question_elements[0].text] = answer_elements[0].text
+
+            idx += 1
+
+        return prompts
