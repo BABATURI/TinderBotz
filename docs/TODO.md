@@ -5,5 +5,6 @@
 - Debug mode And Release Mode (for example- don't ask for the reason from the llm)
 - indicate cannot send more likes/stack is empty- save the time it happened- allow to send likes if certain time has passed
 - handle json returns empty
-- support sending messages with likes
+- support sending messages with likes in cupid
 - set min browser size 
+- extract the q&a in cupid

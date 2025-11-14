@@ -63,8 +63,14 @@ class OkCupidSession(BaseSession):
             if randomize_sleep:
                 time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
         else:
-            # todo implement (get message from llm in main)
-            raise NotImplementedError()
+            FIRST_IMAGE_INTRO_XPATH: str = '//*[@id="quickmatch-aria-tabpanel"]/div/div/div[1]/div[2]/div/div[2]/div/div[1]/button'
+            self.browser.find_element(By.XPATH, FIRST_IMAGE_INTRO_XPATH).click()
+
+            INTRO_MESSAGE_BOX_XPATH: str = '//*[@id="messenger-composer"]'
+            self.browser.find_element(By.XPATH, INTRO_MESSAGE_BOX_XPATH).send_keys(message)
+
+            SEND_MESSAGE_XPATH: str = '//*[@id="OkModal"]/div[1]/div/div/div/div[3]/button'
+            self.browser.find_element(By.XPATH, SEND_MESSAGE_XPATH).click()
 
         self._handle_potential_popups()
 
@@ -85,13 +91,11 @@ class OkCupidSession(BaseSession):
                 element.click()
                 return
 
-    def _get_user_id(self) -> str:
+    def __get_user_id(self) -> str:
+        # todo- fix no such method
         div = self.browser.find_element(By.XPATH, "//div[@class='desktop-dt-wrapper']")
         user_id = div.get_attribute("data-user-id")
         return user_id
-
-    def _format_row_data(self, raw_text: str) -> List[str]:
-        return [p for p in raw_text.split(' | ') if p]
 
     def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
         if not self._is_logged_in():
@@ -117,7 +121,13 @@ class OkCupidSession(BaseSession):
         urls = []
         first_photo_div = self.browser.find_element(By.XPATH, "//div[@class='dt-photo dt-photo-superlikes']")
         # todo- handle selenium.common.exceptions.ElementNotInteractableException
-        first_photo_div.click_safe()
+        try:
+            first_photo_div.click()
+        except Exception as e:
+            print(f"got exception {e}, retrying")
+            time.sleep(2)
+
+            first_photo_div.safe()
         #     wait for img elements to load
         time.sleep(1)
         for img in self.browser.find_elements(By.XPATH,
@@ -150,7 +160,7 @@ class OkCupidSession(BaseSession):
             passions=rowdata.get("passions", ""),
             bio=bio,
         )
-        m.id = self._get_user_id()
+        m.id = self.__get_user_id()
         return m
 
     def get_chat_ids(self, new: bool = True, messaged: bool = True) -> Optional[List[str]]:
