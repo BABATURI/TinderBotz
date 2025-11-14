@@ -56,20 +56,23 @@ def get_image_data(url: str) -> bytes:
 def response_to_json(text: Any) -> Dict[str, Any]:
     if not isinstance(text, str):
         text = str(text)
-    start_marker: str = "```json"
+    start_marker: str = "```"
     end_marker: str = "```"
+    out = {}
+
     start: int = text.find(start_marker)
     if start == -1:
-        raise ValueError("No '```json' block found in response")
-    start += len(start_marker)
-    end: int = text.find(end_marker, start)
-    if end == -1:
-        raise ValueError("No closing '```' found for JSON block")
-    json_str: str = text[start:end].strip()
-    try:
-        return json.loads(json_str)
-    except json.JSONDecodeError as e:
-        try:
-            return json.loads(json_str.replace("'", '"'))
-        except Exception:
-            raise ValueError("Failed to parse JSON from code block") from e
+        start = 0
+        end = len(text)
+    else:
+        start += len(start_marker)
+        end: int = text.find(end_marker, start)
+        if end == -1:
+            raise ValueError("No closing '```' found for JSON block")
+    
+    for line in text[start:end].splitlines():
+        if ':' not in line:
+            continue
+        key, value = line.split(': ', 1)
+        out[key.strip()] = value  # remove trailing comma if present
+    return out

@@ -14,18 +14,18 @@ class DatingLLM:
     The user prefrences are" {user_preferences}
     Profile Info: {profile_info}
     There are a few images for the profile, attached into the query.
-    The output should be a JSON object with the following fields:
-    {{
-        "decision": "like" or "dislike",
-        "reason": "a brief explanation of the decision",
-        "like_message": "first message in hebrew to send to the girl. should be short and engaging"
-    }}
+    The output should look like so: (new line after each field, only these fileds below):
+    ```
+    decision: <like or dislike>
+    reason: <a brief explanation of the decision>
+    like_message: <first message in hebrew to send to the match. it should be a cheesy and funny pickup line that shows you read the profile>
+    ```
     """
     model_list: List[str] = [
                             "gemini-2.5-pro",
                             "gemini-2.5-flash",
-                            "gemini-2.5-flash-lite",
                             "gemini-2.0-flash",
+                            "gemini-2.5-flash-lite",
                             "gemini-2.0-flash-lite",
                             ]
     
