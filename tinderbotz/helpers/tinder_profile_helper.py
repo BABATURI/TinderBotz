@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from tinderbotz.helpers.xpaths import content, modal_manager
 
 
-class ProfileHelper:
+class TinderProfileHelper:
     delay = 5
 
     HOME_URL = "https://www.tinder.com/app/profile"

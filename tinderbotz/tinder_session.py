@@ -18,7 +18,7 @@ from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.tinder_svg_mapper import TinderSvgPaths
 from tinderbotz.helpers.tinder_match_helper import TinderMatchHelper
 from tinderbotz.helpers.tinder_preferences_helper import TinderPreferencesHelper
-from tinderbotz.helpers.profile_helper import ProfileHelper
+from tinderbotz.helpers.tinder_profile_helper import TinderProfileHelper
 from tinderbotz.helpers.xpaths import *
 
 logger = logging.getLogger(__file__)
@@ -75,11 +75,11 @@ class TinderSession(BaseSession):
         helper.set_global(boolean)
 
     def set_bio(self, bio: str) -> None:
-        helper = ProfileHelper(browser=self.browser)
+        helper = TinderProfileHelper(browser=self.browser)
         helper.set_bio(bio)
 
     def add_photo(self, filepath: str) -> None:
-        helper = ProfileHelper(browser=self.browser)
+        helper = TinderProfileHelper(browser=self.browser)
         helper.add_photo(filepath)
 
     def _is_logged_in(self) -> bool:
