@@ -68,11 +68,12 @@ def response_to_json(text: Any) -> Dict[str, Any]:
         start += len(start_marker)
         end: int = text.find(end_marker, start)
         if end == -1:
-            raise ValueError("No closing '```' found for JSON block")
+            end = len(text)
     
     for line in text[start:end].splitlines():
         if ':' not in line:
             continue
-        key, value = line.split(': ', 1)
+        key, value = line.split(':', 1)
+        value = value.strip()
         out[key.strip()] = value  # remove trailing comma if present
     return out
