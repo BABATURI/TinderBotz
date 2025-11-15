@@ -1,7 +1,8 @@
 venv 
 .idea 
 __pycache__
-chrome_profile/
+chrome_profile
+chrome_profile2
 .geminikey
 .vscode/
 data/

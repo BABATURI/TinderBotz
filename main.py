@@ -2,7 +2,7 @@ import json
 import time
 import traceback
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from dataclasses import asdict
 
 from tinderbotz.base_session import BaseSession
@@ -14,12 +14,12 @@ from dating_llm.agent import *
 
 
 def __sleep_until(hour: int, minute: int) -> None:
-    now = datetime.datetime.now()
-    target_time = datetime.datetime(now.year, now.month, now.day, hour, minute)
+    now = datetime.now()
+    target_time = datetime(now.year, now.month, now.day, hour, minute)
 
     # If the target time is in the past, set it for the next day
     if now > target_time:
-        target_time += datetime.timedelta(days=1)
+        target_time += timedelta(days=1)
     else:
         return
 

@@ -1,8 +1,9 @@
 import json
 import logging
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict
 
+from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -49,7 +50,7 @@ class BumbleSession(BaseSession):
         # TODO: fill in here
         return
 
-    def _parse_about_badges_bio(self, story_content: WebElement, geomatch: Geomatch) -> bool:
+    def __complete_about_badges_bio(self, geomatch: Geomatch) -> bool:
         IMG_TO_BADGE_MAP = {
             "https://fr1.ecdn2.bumbcdn.com/i/big/assets/bumble_lifestyle_badges/normal/web/standard/sz___size__/ic_badge_profileChips_dating_heightv2.png": "height",
             "https://fr1.ecdn2.bumbcdn.com/i/big/assets/bumble_lifestyle_badges/normal/web/standard/sz___size__/ic_badge_profileChips_dating_drinkingv2.png": "drinking",
@@ -66,7 +67,7 @@ class BumbleSession(BaseSession):
             return False
         extra_info = {}
         try:
-            lis = story_content.find_elements(By.TAG_NAME, "li")
+            lis = self.browser.find_elements(By.TAG_NAME, "li")
             if lis == []:
                 return False
             for li in lis:
@@ -86,7 +87,10 @@ class BumbleSession(BaseSession):
             geomatch.lifestyle = json.dumps(extra_info)
 
             try:
-                bio = story_content.find_element(By.XPATH, bio_xpath).text
+                ActionChains(self.browser).send_keys(Keys.ARROW_DOWN).perform()
+                time.sleep(0.5)
+
+                bio = self.browser.find_element(By.XPATH, bio_xpath).text
                 if geomatch.bio:
                     geomatch.bio += "\n" + bio
                 else:
@@ -97,28 +101,23 @@ class BumbleSession(BaseSession):
         except:
             return False
 
-    def _parse_picture(self, story_content: WebElement, geomatch: Geomatch) -> bool:
-        xpath = ".//img[@class='media-box__picture-image']"
-        try:
-            # should be only one img
+    def __complete_image_urls(self, geomatch: Geomatch) -> None:
+        album_article_xpath = "//div[@class='encounters-story__content']"
+        for story_content in self.browser.find_elements(By.XPATH, album_article_xpath):
+            xpath = ".//img[@class='media-box__picture-image']"
             for img in story_content.find_elements(By.XPATH, xpath):
                 url = img.get_attribute('src')
-                # url = url.split("&wm_size=")[0]
                 geomatch.image_urls.append(url)
-                return True
-            return False
-        except:
-            return False
 
-    def _parse_name_age_work(self, story_content, geomatch: Geomatch) -> bool:
+    def __complete_name_age_work(self, geomatch: Geomatch) -> bool:
         name_xpath = ".//span[@class='encounters-story-profile__name']"
         age_xpath = ".//span[@class='encounters-story-profile__age']"
         work_xpath = ".//div[@class='encounters-story-profile__details']"
         try:
             # should be only one img
-            name: str = story_content.find_element(By.XPATH, name_xpath).text
-            age: str = story_content.find_element(By.XPATH, age_xpath).text
-            work: List[WebElement] = story_content.find_elements(By.XPATH, work_xpath)
+            name: str = self.browser.find_element(By.XPATH, name_xpath).text
+            age: str = self.browser.find_element(By.XPATH, age_xpath).text
+            work: List[WebElement] = self.browser.find_elements(By.XPATH, work_xpath)
 
             if "," in age:
                 age = age.split(", ")[1]
@@ -130,38 +129,40 @@ class BumbleSession(BaseSession):
         except:
             return False
 
-    def _parse_prompts(self, story_content: WebElement, geomatch: Geomatch) -> bool:
-        q_xpath = ".//div[@class='encounters-story-section__heading-title']"
-        a_xpath = ".//div[@class='encounters-story-section__content']"
-        prompts = {}
-        try:
-            # should be only one prompt
-            story_content.find_element(By.XPATH,
-                                       ".//section[@class='encounters-story-section encounters-story-section--question']")
-            pname: str = story_content.find_element(By.XPATH, q_xpath).find_element(By.TAG_NAME, "h2").get_attribute(
-                "innerHTML")
-            value: str = story_content.find_element(By.XPATH, a_xpath).find_element(By.TAG_NAME, "p").get_attribute(
-                "innerHTML")
+    def __complete_prompts(self, geomatch: Geomatch) -> None:
+        ActionChains(self.browser).send_keys(Keys.ARROW_DOWN).perform()
+        time.sleep(0.5)
 
-            prompts[pname] = value
+        idx: int = 3
 
-            # todo extract all prompts
-            geomatch.prompts = prompts
-            return True
-        except:
-            return False
+        miss_counter: int = 0
+        prompts: Dict[str, str] = {}
+        while miss_counter < 6:
+            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[    2]/article/div/section/div/p
+            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[2]/article/div/section/div/p
+            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[2]/article/div[2]/section/div/p
+            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[2]/article/div[2]/section/div/p
+            q_xpath = f'//*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[{idx}]/article/div[2]/section/div/p'
+            a_xpath = f'//*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[{idx}]/article/div[2]/section/header/div[2]/h2'
+            q_matches: List[WebElement] = self.browser.find_elements(By.XPATH, q_xpath)
+            a_matches: List[WebElement] = self.browser.find_elements(By.XPATH, a_xpath)
 
-    def _parse_location(self, story_content: WebElement, geomatch: Geomatch) -> bool:
+            if not q_matches or not a_matches or not q_matches[0] or not a_matches[0]:
+                miss_counter += 1
+            else:
+                prompts[q_matches[0].text] = a_matches[0].text
+
+            idx += 1
+
+            ActionChains(self.browser).send_keys(Keys.ARROW_DOWN).perform()
+            time.sleep(0.5)
+
+        geomatch.prompts = prompts
+
+    def __complete_location(self, geomatch: Geomatch) -> None:
         xpath = "//div[@class='location-widget__pill']"
-        try:
-            story_content.find_element(By.XPATH,
-                                       ".//section[@class='encounters-story-section encounters-story-section--location']")
-            location_str = story_content.find_element(By.XPATH, xpath).text
-            # TODO: validate output
-            geomatch.home = location_str
-            return True
-        except:
-            return False
+        location_str = self.browser.find_element(By.XPATH, xpath).text
+        geomatch.home = location_str
 
     def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
         if not self._is_logged_in():
@@ -172,24 +173,11 @@ class BumbleSession(BaseSession):
             EC.presence_of_element_located((By.XPATH, xpath)))
 
         geomatch = Geomatch()
-        album_article_xpath = "//div[@class='encounters-story__content']"
-        for story_content in self.browser.find_elements(By.XPATH, album_article_xpath):
-            # try to parse as picture
-            logger.debug("content -> %s", str(story_content))
-            if self._parse_picture(story_content, geomatch):
-                continue
-            # try to parse as profile name / age
-            if self._parse_name_age_work(story_content, geomatch):
-                continue
-            # try to parse as about badges
-            if self._parse_about_badges_bio(story_content, geomatch):
-                continue
-            # try to parse as prompt
-            if self._parse_prompts(story_content, geomatch):
-                continue
-
-            if self._parse_location(story_content, geomatch):
-                continue
+        self.__complete_name_age_work(geomatch)
+        self.__complete_image_urls(geomatch)
+        self.__complete_about_badges_bio(geomatch)
+        self.__complete_prompts(geomatch)
+        self.__complete_location(geomatch)
 
         # BUG: an image can already be in the same as list...
         # if len(geomatch.image_urls) > 1:
