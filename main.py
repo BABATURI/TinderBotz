@@ -95,11 +95,13 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
         decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, geomatch)
 
         print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
+        if decision_json.get("decision", "") not in ("like", "dislike"):
+            continue
         if decision_json["decision"] == "dislike":
             active_session.dislike()
         else:
             active_session.like(
-                message=decision_json["like_message"] if active_session.does_support_message_on_like else None)
+                message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
             likes_cnt += 1
             if likes_cnt == max_likes:
                 return
