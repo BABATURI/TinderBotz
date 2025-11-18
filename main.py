@@ -2,7 +2,7 @@ import json
 import time
 import traceback
 from dataclasses import asdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 from dating_llm.agent import *
@@ -12,21 +12,6 @@ from tinderbotz.helpers.bot_settings import BotSettings
 from tinderbotz.helpers.storage_helper import StorageHelper
 from tinderbotz.okcupid_session import OkCupidSession
 from tinderbotz.tinder_session import Geomatch, TinderSession
-
-
-def __sleep_until(hour: int, minute: int) -> None:
-    now = datetime.now()
-    target_time = datetime(now.year, now.month, now.day, hour, minute)
-
-    # If the target time is in the past, set it for the next day
-    if now > target_time:
-        target_time += timedelta(days=1)
-    else:
-        return
-
-    sleep_duration = (target_time - now).total_seconds()
-
-    time.sleep(sleep_duration)
 
 
 def __create_dating_agent() -> DatingLLM:
@@ -100,7 +85,7 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
 
         is_liked: bool = decision_json["decision"]
 
-        GEOMATCHES_STORAGE_DIR: str = os.path.join(os.path.abspath(__file__), "data")
+        GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
         StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, is_liked)
 
         if not is_liked:
@@ -124,13 +109,9 @@ def main() -> None:
         OkCupidSession(),
     ]
     while True:
-        if datetime.now().hour < settings.active_hours_start:
-            __sleep_until(settings.active_hours_start, 0)
-
-        elif datetime.now().hour >= settings.active_hours_end:
-            # sleep until the next day, then start again
-            __sleep_until(23, 59)
-            time.sleep(61)
+        if datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end:
+            print(f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
+            time.sleep(settings.sleep_time)
             continue
 
         for session in sessions:
