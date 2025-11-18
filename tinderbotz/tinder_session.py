@@ -25,7 +25,6 @@ logger = logging.getLogger(__file__)
 
 
 class TinderSession(BaseSession):
-    HOME_URL: str = "https://www.tinder.com/app/recs"
     app_name: str = "tinder"
     app_logged_in_match: str = "tinder.com/app"
     DELAY: int = 5
@@ -95,12 +94,11 @@ class TinderSession(BaseSession):
             print("User is not logged in yet.\n")
             return False
 
-    def get_geomatch(self) -> Optional[Geomatch]:
-        if not self._is_logged_in():
-            return None
+    def get_geomatch(self) -> Geomatch:
+        assert self._is_logged_in()
 
         if "/app/recs" not in self.browser.current_url:
-            self.browser.get(self.HOME_URL)
+            self.browser.get(self.app_url)
             time.sleep(10)
 
         WebDriverWait(self.browser, 20.0).until(EC.presence_of_element_located(
@@ -161,7 +159,7 @@ class TinderSession(BaseSession):
             self._handle_potential_popups()
             helper.unmatch(chatid)
 
-    def __get_geomatch(self) -> Optional[Geomatch]:
+    def __get_geomatch(self) -> Geomatch:
         self.__open_profile()
 
         name: Optional[str] = self.__get_name()
@@ -197,7 +195,7 @@ class TinderSession(BaseSession):
             else:
                 self.browser.refresh()
         except Exception:
-            self.browser.get(self.HOME_URL)
+            self.browser.get(self.app_url)
             if not second_try:
                 self.__open_profile(second_try=True)
 

@@ -1,16 +1,17 @@
 import json
 import time
 import traceback
-from pathlib import Path
-from datetime import datetime, timedelta
 from dataclasses import asdict
+from datetime import datetime, timedelta
+from pathlib import Path
 
+from dating_llm.agent import *
 from tinderbotz.base_session import BaseSession
 from tinderbotz.bumble_session import BumbleSession
-from tinderbotz.okcupid_session import OkCupidSession
 from tinderbotz.helpers.bot_settings import BotSettings
-from tinderbotz.tinder_session import TinderSession, Geomatch
-from dating_llm.agent import *
+from tinderbotz.helpers.storage_helper import StorageHelper
+from tinderbotz.okcupid_session import OkCupidSession
+from tinderbotz.tinder_session import Geomatch, TinderSession
 
 
 def __sleep_until(hour: int, minute: int) -> None:
@@ -86,25 +87,32 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
     likes_cnt: int = 0
 
     for _ in range(max_swipes):
-        # get profile data (name, age, bio, images, ...)
         geomatch: Geomatch = active_session.get_geomatch()
-        # store this data locally as json with reference to their respective (locally stored) images
-        active_session.store_local(geomatch)
-        # Use the dating agent to decide whether to like or dislike this profile
+
         print("running dating LLM query...")
         decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, geomatch)
 
         print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
         if decision_json.get("decision", "") not in ("like", "dislike"):
+            active_session.browser.refresh()
+            time.sleep(5)
             continue
-        if decision_json["decision"] == "dislike":
+
+        is_liked: bool = decision_json["decision"]
+
+        GEOMATCHES_STORAGE_DIR: str = os.path.join(os.path.abspath(__file__), "data")
+        StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, is_liked)
+
+        if not is_liked:
             active_session.dislike()
-        else:
-            active_session.like(
-                message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
-            likes_cnt += 1
-            if likes_cnt == max_likes:
-                return
+            continue
+
+        active_session.like(
+            message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
+        likes_cnt += 1
+
+        if likes_cnt == max_likes:
+            return
 
 
 def main() -> None:
@@ -113,7 +121,7 @@ def main() -> None:
     sessions = [
         BumbleSession(),
         TinderSession(),
-        # OkCupidSession(),
+        OkCupidSession(),
     ]
     while True:
         if datetime.now().hour < settings.active_hours_start:

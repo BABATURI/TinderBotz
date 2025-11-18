@@ -100,9 +100,8 @@ class OkCupidSession(BaseSession):
         user_id = div.get_attribute("data-user-id")
         return user_id
 
-    def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
-        if not self._is_logged_in():
-            return None
+    def get_geomatch(self) -> Geomatch:
+        assert self._is_logged_in()
 
         name_xpath = "//h2[@class='card-content-header__text']"
         WebDriverWait(self.browser, 5).until(
@@ -171,11 +170,11 @@ class OkCupidSession(BaseSession):
         # todo implement
         raise NotImplementedError()
 
-    def get_new_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
+    def get_new_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
         # todo implement
         raise NotImplementedError()
 
-    def get_messaged_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
+    def get_messaged_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
         # todo implement
         raise NotImplementedError()
 

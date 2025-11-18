@@ -232,17 +232,6 @@ Get data *name, age, bio, distance, home, study, passions, images...* of the dis
 geomatch = session.get_geomatch()
 ```
 **Optional parameters**</br>
-
-## Storing (geo)Matches
-Every profile, also known as a (geo)match, can be stored locally. </br>
-Storing data can be useful for reducing runtime, for example when needing to fetch your matches.</br>
-```
-matches = session.getAllMatches()
-for match in matches:
-   session.store_local(match)
-   
-geomatch = session.get_geomatch()
-session.store_local(geomatch)
 ```
 ## Sending Messages
 Messages can be sent to matches.</br>

@@ -130,10 +130,6 @@ class BaseSession:
     def _is_logged_in(self):
         raise NotImplementedError()
 
-    def store_local(self, match: Geomatch):
-        filename: str = match.match_type
-        StorageHelper.store_match(match, directory=os.path.join("data", filename), filename=filename)
-
     def like(self, randomize_sleep=True, message: Optional[str] = None):
         if message:
             raise NotImplementedError()

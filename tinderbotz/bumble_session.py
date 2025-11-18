@@ -138,19 +138,15 @@ class BumbleSession(BaseSession):
         miss_counter: int = 0
         prompts: Dict[str, str] = {}
         while miss_counter < 6:
-            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[    2]/article/div/section/div/p
-            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[2]/article/div/section/div/p
-            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[2]/article/div[2]/section/div/p
-            # //*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[2]/article/div[2]/section/div/p
-            q_xpath = f'//*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[{idx}]/article/div[2]/section/div/p'
-            a_xpath = f'//*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[{idx}]/article/div[2]/section/header/div[2]/h2'
-            q_matches: List[WebElement] = self.browser.find_elements(By.XPATH, q_xpath)
-            a_matches: List[WebElement] = self.browser.find_elements(By.XPATH, a_xpath)
+            answer_xpath = f'//*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[{idx}]/article/div[2]/section/div/p'
+            question_xpath = f'//*[@id="main"]/div/div[1]/main/div[2]/div/div/span/div[1]/article/div[1]/div[{idx}]/article/div[2]/section/header/div[2]/h2'
+            answer_matches: List[WebElement] = self.browser.find_elements(By.XPATH, answer_xpath)
+            question_matches: List[WebElement] = self.browser.find_elements(By.XPATH, question_xpath)
 
-            if not q_matches or not a_matches or not q_matches[0] or not a_matches[0]:
+            if not answer_matches or not question_matches or not answer_matches[0] or not question_matches[0]:
                 miss_counter += 1
             else:
-                prompts[q_matches[0].text] = a_matches[0].text
+                prompts[question_matches[0].text] = answer_matches[0].text
 
             idx += 1
 
@@ -161,12 +157,13 @@ class BumbleSession(BaseSession):
 
     def __complete_location(self, geomatch: Geomatch) -> None:
         xpath = "//div[@class='location-widget__pill']"
-        location_str = self.browser.find_element(By.XPATH, xpath).text
-        geomatch.home = location_str
+        web_elements: List[WebElement] = self.browser.find_elements(By.XPATH, xpath)
 
-    def get_geomatch(self, quickload: bool = True) -> Optional[Geomatch]:
-        if not self._is_logged_in():
-            return None
+        if len(web_elements) > 0:
+            geomatch.home = web_elements[0].text
+
+    def get_geomatch(self) -> Geomatch:
+        assert self._is_logged_in()
 
         xpath = "//div[@class='encounters-action tooltip-activator encounters-action--superswipe']"
         WebDriverWait(self.browser, 5).until(
@@ -189,11 +186,11 @@ class BumbleSession(BaseSession):
         # todo implement
         raise NotImplementedError()
 
-    def get_new_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
+    def get_new_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
         # todo implement
         raise NotImplementedError()
 
-    def get_messaged_matches(self, amount: int = 100000, quickload: bool = True) -> Optional[List[Geomatch]]:
+    def get_messaged_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
         # todo implement
         raise NotImplementedError()
 
