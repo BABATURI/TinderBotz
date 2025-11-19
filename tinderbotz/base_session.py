@@ -87,8 +87,7 @@ class BaseSession:
 
         # print out the statistics of the session
         try:
-            BOT_NAME: str = 'BaseBot'
-            box = self._get_msg_box(lines=lines, title=self.__name__)
+            box = self._get_msg_box(lines=lines, title=self.__class__.__name__)
             print(box)
         finally:
             print("Started session: {}".format(self.started))
