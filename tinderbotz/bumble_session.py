@@ -156,11 +156,12 @@ class BumbleSession(BaseSession):
         geomatch.prompts = prompts
 
     def __complete_location(self, geomatch: Geomatch) -> None:
-        xpath = "//div[@class='location-widget__pill']"
-        web_elements: List[WebElement] = self.browser.find_elements(By.XPATH, xpath)
-
-        if len(web_elements) > 0:
-            geomatch.home = web_elements[0].text
+        try:
+            xpath = "//div[@class='location-widget__pill']"
+            location_str = self.browser.find_element(By.XPATH, xpath).text
+            geomatch.home = location_str
+        except:
+            pass
 
     def get_geomatch(self) -> Geomatch:
         assert self._is_logged_in()

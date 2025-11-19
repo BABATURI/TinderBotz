@@ -54,6 +54,8 @@ class OkCupidSession(BaseSession):
         dislike_btn.click()
         if randomize_sleep:
             time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+        self.session_data['dislike'] += 1
+        return True
 
     def like(self, randomize_sleep=True, message: Optional[str] = None):
         if not message:
@@ -65,10 +67,11 @@ class OkCupidSession(BaseSession):
         else:
             FIRST_IMAGE_INTRO_XPATH: str = '//*[@id="quickmatch-aria-tabpanel"]/div/div/div[1]/div[2]/div/div[2]/div/div[1]/button'
             self.browser.find_element(By.XPATH, FIRST_IMAGE_INTRO_XPATH).click()
-
+            time.sleep(0.5)
             INTRO_MESSAGE_BOX_XPATH: str = '//*[@id="messenger-composer"]'
+            # TODO: fix crash here sometimes, DO NOT SEND EMOJIS!!!
             self.browser.find_element(By.XPATH, INTRO_MESSAGE_BOX_XPATH).send_keys(message)
-
+            
             SEND_MESSAGE_XPATH: str = '//*[@id="OkModal"]/div[1]/div/div/div/div[3]/button'
             self.browser.find_element(By.XPATH, SEND_MESSAGE_XPATH).click()
 
@@ -76,6 +79,10 @@ class OkCupidSession(BaseSession):
             time.sleep(WAIT_FOR_BOX_TO_DISAPPEAR)
 
         self._handle_potential_popups()
+        if randomize_sleep:
+            self._random_sleep()
+        self.session_data['like'] += 1
+        return True
 
     def superlike(self, randomize_sleep=True):
         superlike_btn = self.browser.find_element(By.XPATH,
@@ -83,6 +90,8 @@ class OkCupidSession(BaseSession):
         superlike_btn.click()
         if randomize_sleep:
             time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+        self.session_data['superlike'] += 1
+        return True
 
     def _handle_potential_popups(self):
         LIKE_THEM_ANYWAY_XPATH: str = '//*[@id="BaseModal"]/button[2]'
@@ -114,7 +123,11 @@ class OkCupidSession(BaseSession):
         else:
             age = age_location
             location = ""
-        age = int(age.strip())
+        
+        try:
+            age = int(age.strip())
+        except ValueError:
+            age = age_location.strip()
         # get bio
         bio = ""
         for a in self.browser.find_elements(By.XPATH, "//span[@class='dt-essay-text']"):
@@ -129,7 +142,7 @@ class OkCupidSession(BaseSession):
             print(f"got exception {e}, retrying")
             time.sleep(2)
 
-            first_photo_div.safe()
+            first_photo_div.click()
         #     wait for img elements to load
         time.sleep(1)
         for img in self.browser.find_elements(By.XPATH,

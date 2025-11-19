@@ -88,7 +88,7 @@ class BaseSession:
         # print out the statistics of the session
         try:
             BOT_NAME: str = 'BaseBot'
-            box = self._get_msg_box(lines=lines, title=BOT_NAME)
+            box = self._get_msg_box(lines=lines, title=self.__name__)
             print(box)
         finally:
             print("Started session: {}".format(self.started))
@@ -130,7 +130,14 @@ class BaseSession:
     def _is_logged_in(self):
         raise NotImplementedError()
 
-    def like(self, randomize_sleep=True, message: Optional[str] = None):
+    def store_local(self, match: Geomatch):
+        filename: str = match.match_type
+        StorageHelper.store_match(match, directory=os.path.join("data", filename), filename=filename)
+    
+    def _random_sleep(self):
+            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+        
+    def like(self, randomize_sleep=True, message: Optional[str] = None) -> bool:
         if message:
             raise NotImplementedError()
 
@@ -144,10 +151,11 @@ class BaseSession:
             self._get_home_page()
             return False
         if randomize_sleep:
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+            self._random_sleep()
+        self.session_data['like'] += 1
         return True
 
-    def dislike(self, randomize_sleep=True):
+    def dislike(self, randomize_sleep=True) -> bool:
         # base option, can be overwritten
         if not self._is_logged_in():
             return
@@ -158,7 +166,8 @@ class BaseSession:
             self._get_home_page()
             return False
         if randomize_sleep:
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+            self._random_sleep()
+        self.session_data['dislike'] += 1
         return True
 
     def like_multiple(self, amount=1, ratio='100%', sleep=1, randomize_sleep=True):
@@ -200,7 +209,7 @@ class BaseSession:
 
         self._print_liked_stats()
 
-    def superlike(self, randomize_sleep=True):
+    def superlike(self, randomize_sleep=True) -> bool:
         if not self._is_logged_in():
             return
         try:
@@ -210,7 +219,8 @@ class BaseSession:
             self._get_home_page()
             return False
         if randomize_sleep:
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+            self._random_sleep()
+        self.session_data['superlike'] += 1
         return True
 
     def get_geomatch(self) -> Geomatch:
