@@ -15,7 +15,7 @@ from tinderbotz.okcupid_session import OkCupidSession
 from tinderbotz.tinder_session import Geomatch, TinderSession
 
 
-def __create_dating_agent() -> DatingLLM:
+def _create_dating_agent() -> DatingLLM:
     config_file: Path = Path("configuration", "user_pref")
 
     user_pref: str = "I like fit and slim, blonde / hazel haired women with bright eyes who enjoy outdoor activities and have a good sense of humor."
@@ -30,7 +30,7 @@ def __create_dating_agent() -> DatingLLM:
     return DatingLLM(user_pref)
 
 
-def __load_bot_settings() -> BotSettings:
+def _load_bot_settings() -> BotSettings:
     settings_path = Path("configuration", "bot_settings.json")
     if settings_path.exists():
         with open(settings_path, "r") as f:
@@ -43,86 +43,7 @@ def __load_bot_settings() -> BotSettings:
         return default_settings
 
 
-def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dict[str, Any]:
-    # Note: to save tokens we don't save everything - only what matters
-    minimized_duplicate_geomatch: Geomatch = Geomatch(name=geomatch.name,
-                                                      age=geomatch.age,
-                                                      work=geomatch.work,
-                                                      study=geomatch.study,
-                                                      bio=geomatch.bio,
-                                                      lifestyle=geomatch.lifestyle,
-                                                      passions=geomatch.passions,
-                                                      looking_for=geomatch.looking_for)
-
-    query: str = (f"Full profile info:\n"
-                  f"{json.dumps({x: y for x, y in asdict(minimized_duplicate_geomatch).items() if y not in (None, '', [])}, indent=4)}")
-    image_urls: List[str] = geomatch.image_urls[:6]
-
-    ai_json_response, total_tokens = dllm.run_llm(query, image_urls)
-    print(f"Total tokens used: {total_tokens}")
-    return ai_json_response
-
-
-def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
-    max_likes = settings.max_likes_per_session
-    max_swipes = settings.max_swipes_per_session
-
-    location: Tuple[float, float] = settings.location
-    active_session.set_custom_location(latitude=location[0], longitude=location[1])
-
-    active_session.wait_for_login()
-
-    dating_agent: DatingLLM = __create_dating_agent()
-
-    likes_cnt: int = 0
-
-    for _ in range(max_swipes):
-        geomatch: Geomatch = active_session.get_geomatch()
-
-        print("running dating LLM query...")
-        decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, geomatch)
-
-        print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
-        if decision_json.get("decision", "") not in ("like", "dislike"):
-            active_session.browser.refresh()
-            time.sleep(5)
-            continue
-
-        is_liked: bool = decision_json["decision"]
-
-        GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
-        StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, is_liked)
-
-        if not is_liked:
-            active_session.dislike()
-            continue
-
-        active_session.like(
-            message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
-        likes_cnt += 1
-
-        if likes_cnt == max_likes:
-            return
-
-
-def __load_sessions(settings: BotSettings) -> List[BaseSession]:
-    session_map = {
-        "tinder": TinderSession,
-        "okcupid": OkCupidSession,
-        "bumble": BumbleSession,
-    }
-    sessions: List[BaseSession] = []
-    for session_name in settings.sessions:
-        session_class = session_map.get(session_name.lower())
-        if session_class:
-            sessions.append(session_class())
-    if sessions == []:
-        print("Warning: No sessions specified in settings file")
-        sessions = [TinderSession(), OkCupidSession(), BumbleSession()]
-    return sessions
-
-
-def __create_loggers(log_dir: Path = Path("logs")) -> Path:
+def _create_loggers(log_dir: Path = Path("logs")) -> Path:
         """
         Configure root logger: DEBUG -> file, INFO -> console.
         Clears existing handlers to avoid duplicate logs when reloading.
@@ -140,8 +61,8 @@ def __create_loggers(log_dir: Path = Path("logs")) -> Path:
 
         # file handler (verbose)
         file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        file_handler.setLevel(logging.INFO)
+        file_formatter = logging.Formatter("%(asctime)s:%(name)s:%(levelname)s:%(message)s")
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
 
@@ -156,28 +77,132 @@ def __create_loggers(log_dir: Path = Path("logs")) -> Path:
         return log_file
 
 
-def main() -> None:
-    # todo- handle no more likes left/no options are left
-    settings = __load_bot_settings()
-    sessions = __load_sessions(settings)
-    log_file = __create_loggers()
+# TODO: refactor this to be not ugly
+class Main:
+    def __init__(self):
+        self._dating_agent = _create_dating_agent()
+        self._log_file = _create_loggers()
+        self._settings = _load_bot_settings()
+        self._sessions = self._load_sessions_by_config()
+
+
+    def get_response_from_dating_agent(self, geomatch: Geomatch) -> Dict[str, Any]:
+        # Note: to save tokens we don't save everything - only what matters
+        minimized_duplicate_geomatch: Geomatch = Geomatch(name=geomatch.name,
+                                                        age=geomatch.age,
+                                                        work=geomatch.work,
+                                                        study=geomatch.study,
+                                                        bio=geomatch.bio,
+                                                        lifestyle=geomatch.lifestyle,
+                                                        passions=geomatch.passions,
+                                                        looking_for=geomatch.looking_for)
+
+        query: str = (f"Full profile info:\n"
+                    f"{json.dumps({x: y for x, y in asdict(minimized_duplicate_geomatch).items() if y not in (None, '', [])}, indent=4)}")
+        image_urls: List[str] = geomatch.image_urls[:6]
+
+        ai_json_response, total_tokens = self._dating_agent.run_llm(query, image_urls)
+        logging.info(f"Total tokens used: {total_tokens}")
+        return ai_json_response
+
+
+    def _perform_round(self, active_session: BaseSession) -> None:
+        settings: BotSettings = self._settings
+        max_likes = settings.max_likes_per_session
+        max_swipes = settings.max_swipes_per_session
+
+        location: Tuple[float, float] = settings.location
+        active_session.set_custom_location(latitude=location[0], longitude=location[1])
+
+        active_session.wait_for_login()
+
+        likes_cnt: int = 0
+
+        for _ in range(max_swipes):
+            geomatch: Geomatch = active_session.get_geomatch()
+
+            logging.info("running dating LLM query...")
+            decision_json: Dict[str, Any] = self.get_response_from_dating_agent(geomatch)
+
+            logging.info(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
+            if decision_json.get("decision", "") not in ("like", "dislike"):
+                active_session.browser.refresh()
+                time.sleep(5)
+                continue
+
+            is_liked: bool = decision_json["decision"]
+
+            GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
+            StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, is_liked)
+
+            if not is_liked:
+                active_session.dislike()
+                continue
+
+            active_session.like(
+                message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
+            likes_cnt += 1
+
+            if likes_cnt == max_likes:
+                return
     
-    while True:
-        if datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end:
-            print(f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
-            time.sleep(settings.sleep_time)
-            continue
-        
-        for session in sessions:
+    def perform_all_rounds(self) -> None:
+        for session in self._sessions:
             try:
                 with session as active_session:
-                    __perform_round(active_session, settings)
+                    self._perform_round(active_session)
             except Exception as e:
-                print(f"got exception {e}")
-                traceback.print_exc()
+                logging.error(f"got exception {e}:")
+                logging.error("%s", traceback.format_exc())
 
-        print("Sleeping till next session")
-        time.sleep(settings.sleep_time)
+    def _load_sessions_by_config(self) -> List[BaseSession]:
+        settings: BotSettings = self._settings
+        # TODO: refactor to get all subclasses of BaseSession automatically
+        session_map = {
+            "tinder": TinderSession,
+            "okcupid": OkCupidSession,
+            "bumble": BumbleSession,
+        }
+        sessions: List[BaseSession] = []
+
+        for session_name in settings.sessions:
+            session_class = session_map.get(session_name.lower())
+            if session_class:
+                sessions.append(session_class())
+        if sessions == []:
+            logging.warning("No sessions specified in settings file")
+            sessions = [TinderSession(), OkCupidSession(), BumbleSession()]
+        return sessions
+
+    def get_sleep_time(self) -> int:
+        return self._settings.sleep_time
+    
+    def is_in_active_hours(self) -> bool:
+        current_hour: int = datetime.now().hour
+        return (self._settings.active_hours_start <= current_hour < self._settings.active_hours_end) or self._settings.bypass_active_hours
+    
+    def close(self) -> None:
+        self._dating_agent.close()
+
+
+
+
+
+def main() -> None:
+    # todo- handle no more likes left/no options are left
+    main_app = Main()
+    settings: BotSettings = main_app._settings
+    
+    while True:
+        if not main_app.is_in_active_hours():
+            logging.info(f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
+            time.sleep(main_app.get_sleep_time())
+            continue
+        
+        main_app.perform_all_rounds()
+        
+        logging.info("Sleeping till next session")
+        time.sleep(main_app.get_sleep_time())
 
 
 if __name__ == "__main__":
