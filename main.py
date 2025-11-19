@@ -122,7 +122,7 @@ def __load_sessions(settings: BotSettings) -> List[BaseSession]:
     return sessions
 
 
-def __create_loggers(log_dir: Path = Path("logs")) -> None:
+def __create_loggers(log_dir: Path = Path("logs")) -> Path:
         """
         Configure root logger: DEBUG -> file, INFO -> console.
         Clears existing handlers to avoid duplicate logs when reloading.
@@ -153,20 +153,21 @@ def __create_loggers(log_dir: Path = Path("logs")) -> None:
         root_logger.addHandler(console_handler)
 
         logging.debug("Initialized logging. Log file: %s", log_file)
+        return log_file
 
 
 def main() -> None:
     # todo- handle no more likes left/no options are left
     settings = __load_bot_settings()
     sessions = __load_sessions(settings)
-    __create_loggers()
+    log_file = __create_loggers()
     
     while True:
         if datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end:
             print(f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
             time.sleep(settings.sleep_time)
             continue
-
+        
         for session in sessions:
             try:
                 with session as active_session:

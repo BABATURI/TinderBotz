@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import List, Dict, Any, Tuple, Optional
 
 from dotenv import load_dotenv
@@ -50,6 +51,7 @@ class DatingLLM:
         except (genai.errors.ClientError, genai.errors.ServerError):
             print("Switching model and retrying...")
             self._model_idx = (self._model_idx + 1) % len(self.model_list)
+            logging.info(f"Switched to model: {self.model_list[self._model_idx]}")
         return self._run_llm(profile_bio, images_urls)
 
     def _run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:
@@ -73,11 +75,11 @@ class DatingLLM:
                     mime_type="image/jpeg",
                 )
             )
-        
+
         response = self.client.models.generate_content(
             model=selected_model,
             contents=contents,
-            config=genai.GenerationConfig(
+            config=genai.types.GenerateContentConfig(
                 temperature=0.75,
                 # response_mime_type='application/json',
             )

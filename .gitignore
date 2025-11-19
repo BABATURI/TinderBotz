@@ -8,3 +8,4 @@ chrome_profile2
 data/
 .env
 configuration/
+logs/
