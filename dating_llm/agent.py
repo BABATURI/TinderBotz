@@ -18,14 +18,16 @@ class DatingLLM:
     ```
     decision: <like or dislike>
     reason: <a brief explanation of the decision>
-    like_message: <first message in hebrew to send to the match. it should be a cheesy and funny pickup line that shows you read the profile. Don't use the girl's name in case you'll write it wrong.>
+    like_message: <first message in hebrew to send to the match. it should be a cheesy and funny pickup line
+    that shows you read the profile. do not add emojies, do not write the match's name.>
     ```
     """
     model_list: List[str] = [
                             "gemini-2.5-pro",
                             "gemini-2.5-flash",
-                            "gemini-2.0-flash",
+                            "gemini-2.5-flash-preview-09-2025",
                             "gemini-2.5-flash-lite",
+                            "gemini-2.0-flash",
                             "gemini-2.0-flash-lite",
                             ]
     
@@ -75,6 +77,10 @@ class DatingLLM:
         response = self.client.models.generate_content(
             model=selected_model,
             contents=contents,
+            config=genai.GenerationConfig(
+                temperature=0.75,
+                # response_mime_type='application/json',
+            )
         )
 
         if response.text is None:
@@ -86,6 +92,4 @@ class DatingLLM:
             )
 
         token_usage: int = response.usage_metadata.total_token_count
-        # TODO: fix empty response issue
-        print(">>>", response.text, "<<<")
         return response_to_json(response.text), token_usage
