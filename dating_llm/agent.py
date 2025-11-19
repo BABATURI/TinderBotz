@@ -23,13 +23,13 @@ class DatingLLM:
     that shows you read the profile. do not add emojies, do not write the match's name.>
     ```
     """
+    # the flash-lite models are not good at following instructions
     model_list: List[str] = [
                             "gemini-2.5-pro",
                             "gemini-2.5-flash",
-                            "gemini-2.5-flash-preview-09-2025",
-                            "gemini-2.5-flash-lite",
-                            "gemini-2.0-flash",
-                            "gemini-2.0-flash-lite",
+                            # "gemini-2.5-flash-lite",
+                            # "gemini-2.0-flash",
+                            # "gemini-2.0-flash-lite",
                             ]
     
     def __init__(self, user_pref: str) -> None:
