@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 import traceback
 from dataclasses import asdict
@@ -19,8 +20,12 @@ def __create_dating_agent() -> DatingLLM:
 
     user_pref: str = "I like fit and slim, blonde / hazel haired women with bright eyes who enjoy outdoor activities and have a good sense of humor."
     if config_file.exists():
-        with open("configuration/user_pref", "r") as f:
+        with open(config_file, "r") as f:
             user_pref = f.read()
+    else:
+        print("Creating default user preference file...")
+        with open(config_file, "w") as f:
+            f.write(user_pref)
 
     return DatingLLM(user_pref)
 
@@ -51,7 +56,7 @@ def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dic
 
     query: str = (f"Full profile info:\n"
                   f"{json.dumps({x: y for x, y in asdict(minimized_duplicate_geomatch).items() if y not in (None, '', [])}, indent=4)}")
-    image_urls: List[str] = geomatch.image_urls[:3]
+    image_urls: List[str] = geomatch.image_urls[:6]
 
     ai_json_response, total_tokens = dllm.run_llm(query, image_urls)
     print(f"Total tokens used: {total_tokens}")
@@ -100,14 +105,62 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
             return
 
 
+def __load_sessions(settings: BotSettings) -> List[BaseSession]:
+    session_map = {
+        "tinder": TinderSession,
+        "okcupid": OkCupidSession,
+        "bumble": BumbleSession,
+    }
+    sessions: List[BaseSession] = []
+    for session_name in settings.sessions:
+        session_class = session_map.get(session_name.lower())
+        if session_class:
+            sessions.append(session_class())
+    if sessions == []:
+        print("Warning: No sessions specified in settings file")
+        sessions = [TinderSession(), OkCupidSession(), BumbleSession()]
+    return sessions
+
+
+def __create_loggers(log_dir: Path = Path("logs")) -> None:
+        """
+        Configure root logger: DEBUG -> file, INFO -> console.
+        Clears existing handlers to avoid duplicate logs when reloading.
+        """
+        log_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file = log_dir / f"log_{timestamp}.txt"
+
+        root_logger = logging.getLogger()
+        # remove existing handlers to avoid duplicate entries (useful in REPL / hot-reload)
+        if root_logger.handlers:
+            root_logger.handlers.clear()
+
+        root_logger.setLevel(logging.DEBUG)
+
+        # file handler (verbose)
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(file_handler)
+
+        # console handler (concise)
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
+        console_handler.setFormatter(console_formatter)
+        root_logger.addHandler(console_handler)
+
+        logging.debug("Initialized logging. Log file: %s", log_file)
+
+
 def main() -> None:
     # todo- handle no more likes left/no options are left
     settings = __load_bot_settings()
-    sessions = [
-        BumbleSession(),
-        TinderSession(),
-        OkCupidSession(),
-    ]
+    sessions = __load_sessions(settings)
+    __create_loggers()
+    
     while True:
         if datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end:
             print(f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
