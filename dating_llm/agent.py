@@ -12,7 +12,7 @@ from dating_llm.agent_utils import response_to_json, get_image_data
 class DatingLLM:
     PROMT_TEMPLATE: str = """You are a dating assistant AI. your Job is to decide whether to like or dislike a profile based on the bio and images provided, and the user's preferences.
     Respond with 'like' or 'dislike' only.
-    The user prefrences are" {user_preferences}
+    The user prefrences are: {user_preferences}
     Profile Info: {profile_info}
     There are a few images for the profile, attached into the query.
     The output should look like so: (new line after each field, only these fileds below):

@@ -16,7 +16,7 @@ from tinderbotz.tinder_session import Geomatch, TinderSession
 
 
 def _create_dating_agent() -> DatingLLM:
-    config_file: Path = Path("configuration", "user_pref")
+    config_file: Path = Path("configuration", "user_pref.txt")
 
     user_pref: str = "I like fit and slim, blonde / hazel haired women with bright eyes who enjoy outdoor activities and have a good sense of humor."
     if config_file.exists():
