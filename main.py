@@ -135,13 +135,14 @@ class Main:
             GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
             StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, is_liked)
 
-            if not is_liked:
+            if decision_json["decision"] == "dislike":
                 active_session.dislike()
-                continue
-
-            active_session.like(
-                message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
-            likes_cnt += 1
+            else:
+                msg = None
+                if active_session.does_support_message_on_like:
+                    msg = decision_json.get("like_message", "")
+                active_session.like(message=msg)
+                likes_cnt += 1
 
             if likes_cnt == max_likes:
                 return
