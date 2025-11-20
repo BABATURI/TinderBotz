@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from dating_llm.agent import *
+from dating_llm.openrouter_agent import ORDatingLLM
 from tinderbotz.base_session import BaseSession
 from tinderbotz.bumble_session import BumbleSession
 from tinderbotz.helpers.bot_settings import BotSettings
@@ -27,7 +28,7 @@ def __create_dating_agent() -> DatingLLM:
         with open(config_file, "w") as f:
             f.write(user_pref)
 
-    return DatingLLM(user_pref)
+    return ORDatingLLM(user_pref)
 
 
 def __load_bot_settings() -> BotSettings:

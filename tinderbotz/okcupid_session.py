@@ -114,7 +114,7 @@ class OkCupidSession(BaseSession):
 
         name_xpath = "//h2[@class='card-content-header__text']"
         WebDriverWait(self.browser, 5).until(
-            EC.presence_of_element_located((By.XPATH, name_xpath)))
+            EC.presence_of_element_located((By.XPATH, "//div[@class='dt-photo dt-photo-superlikes']")))
         # name, age
         name = self.browser.find_element(By.XPATH, name_xpath).text
         age_location = self.browser.find_element(By.XPATH, "//div[@class='card-content-header__location']").text
