@@ -1,12 +1,10 @@
 - handle the case where no one is left in the tinder queue
 - remove useless prints
-- create config file for main
 - update config for disliking in cases that do not require llm (smoking, etc.)- maybe not necessary
 - Debug mode And Release Mode (for example- don't ask for the reason from the llm)
 - indicate cannot send more likes/stack is empty- save the time it happened- allow to send likes if certain time has passed
-- handle json returns empty
-- support sending messages with likes in cupid
 - set min browser size 
 - extract the q&a in cupid
-- save all prompts in bumble
 - cupid: extract all info (kosher etc)
+- ambush a match, when online, send a user message if didnt answer previous message
+- integrate telegram bot to notify about matches
