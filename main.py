@@ -44,7 +44,7 @@ def __load_bot_settings() -> BotSettings:
         return default_settings
 
 
-def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dict[str, Any]:
+def __get_response_from_dating_agent(dllm: DatingLLM, settings: BotSettings, geomatch: Geomatch) -> Dict[str, Any]:
     # Note: to save tokens we don't save everything - only what matters
     minimized_duplicate_geomatch: Geomatch = Geomatch(name=geomatch.name,
                                                       age=geomatch.age,
@@ -57,7 +57,7 @@ def __get_response_from_dating_agent(dllm: DatingLLM, geomatch: Geomatch) -> Dic
 
     query: str = (f"Full profile info:\n"
                   f"{json.dumps({x: y for x, y in asdict(minimized_duplicate_geomatch).items() if y not in (None, '', [])}, indent=4)}")
-    image_urls: List[str] = geomatch.image_urls[:6]
+    image_urls: List[str] = geomatch.image_urls[:settings.image_count_to_use]
 
     ai_json_response, total_tokens = dllm.run_llm(query, image_urls)
     print(f"Total tokens used: {total_tokens}")
@@ -81,7 +81,7 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
         geomatch: Geomatch = active_session.get_geomatch()
 
         print("running dating LLM query...")
-        decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, geomatch)
+        decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, settings, geomatch)
 
         print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
         if decision_json.get("decision", "") not in ("like", "dislike"):
@@ -94,7 +94,6 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
 
         if decision_json["decision"] == "dislike":
             active_session.dislike()
-            continue
         elif decision_json["decision"] == "like":
             active_session.like(
                 message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
