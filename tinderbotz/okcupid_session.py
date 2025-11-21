@@ -240,7 +240,8 @@ class OkCupidSession(BaseSession):
                 continue
             day, time_part = last_time_str.split(" - ")
             day = day.strip().lower()
-            if day not in ["yesterday", _get_today_str()]:
+            # TODO: save state on matches to know if we sent them too many ambush msgs
+            if day not in ["today", "yesterday", _get_today_str()]:
                 # send message
                 print(f"sending message to match last messaged on {day} at {time_part}")
                 # TODO: get message from config
