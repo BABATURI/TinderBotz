@@ -1,6 +1,7 @@
 import logging
 import random
 import time
+import datetime
 from typing import List, Optional, Tuple, Dict
 
 from selenium.webdriver.common.action_chains import ActionChains
@@ -14,6 +15,11 @@ from tinderbotz.base_session import BaseSession
 from tinderbotz.helpers.geomatch import Geomatch
 
 logger = logging.getLogger(__file__)
+
+
+def _get_today_str() -> str:
+    # returns 'sunday', 'monday', ...
+    return datetime.datetime.now().strftime("%A").lower()
 
 
 class OkCupidSession(BaseSession):
@@ -189,11 +195,76 @@ class OkCupidSession(BaseSession):
 
     def get_messaged_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
         # todo implement
-        raise NotImplementedError()
+        self.browser.get("https://www.okcupid.com/messages")
+        # wait for page to load...
+        match_xpath = "//button[@class='QRA_1G2GcewzF7FtefKy']"  # TODO: check me
+        if not self.wait_for_elemnt(By.XPATH, match_xpath, timeout=10):
+            return []
+        
+        online_span = ".//div[3]/div[1]/div/span[2]"
+        # click on match if online
+        msg_pane = "//div[@class='messenger-message-pane']"
+        a_go_to_profile = "//a[@class='_iImuSgqpB1KCDBnz0xl']"
+        # wait for msg pane to load
+        my_msgs = "//div[@class='jfAVQ9VA83skwKoCDID7 sccsTtkIJF2XQKf8MDHH']"
+        close_msg_pane = "//button[@aria-label='Close chat window']"
+        timestamp = ".//time[@class='ZX1D08o8i5JILb7ZXkkH']"
+        # go through my msgs, get LAST msg time (format: DAY - TIME AM/PM)
+        # compare to current time - if greater than 1 day, trigger callback to send message
+        for button in self.browser.find_elements(By.XPATH, match_xpath):
+            online_span = button.find_elements(By.XPATH, online_span)
+            if not (len(online_span) > 0 and "onlinedot" in online_span[0].get_attribute("class")):
+                continue
+            button.click()
+            if not self.wait_for_elemnt(By.XPATH, msg_pane, timeout=2):
+                continue
+            # get user id
+            a = self.browser.find_element(By.XPATH, a_go_to_profile)
+            user_id = a.get_attribute("data-userid")
+            
+            msgs = self.browser.find_elements(By.XPATH, my_msgs)
+            if len(msgs) == 0:
+                continue
+            last_time_str = None
+            for my_msg in reversed(msgs):
+                time_elems = my_msg.find_elements(By.XPATH, timestamp)
+                if len(time_elems) == 0:
+                    continue
+                last_time_str = time_elems[0].text
+                print(f"last msg time: {last_time_str}")
+                break
+            if last_time_str is None:
+                continue
+            # maybe format can be like 1 minute ago, 2 hours ago, yesterday, ...
+            if not " - " in last_time_str:
+                continue
+            day, time_part = last_time_str.split(" - ")
+            day = day.strip().lower()
+            if day not in ["yesterday", _get_today_str()]:
+                # send message
+                print(f"sending message to match last messaged on {day} at {time_part}")
+                # TODO: get message from config
+                self.send_message(user_id, "היי, מה שלומך? :)")
+                time.sleep(1)
+            # close msg pane
+            try:
+                self.browser.find_element(By.XPATH, close_msg_pane).click()
+            except:
+                pass
+        # go back to main activity
+        self.browser.get(self.app_url)
+        time.sleep(1)
 
     def send_message(self, chatid: str, message: str) -> None:
         # todo implement
-        raise NotImplementedError()
+        # assumes we are on message pane already / or in profile page
+        try:
+            textarea_xpath = "//textarea[@id='messenger-composer']"
+            textarea = self.browser.find_element(By.XPATH, textarea_xpath)
+            textarea.send_keys(message)
+            textarea.send_keys(Keys.ENTER)
+        except:
+            print("Could not send message - no textarea found")
 
     def unmatch(self, chatid: str) -> None:
         # todo implement

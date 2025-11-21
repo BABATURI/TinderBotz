@@ -16,6 +16,9 @@ from tinderbotz.okcupid_session import OkCupidSession
 from tinderbotz.tinder_session import Geomatch, TinderSession
 
 
+TRY_MESSAGE_BACK = True
+
+
 def __create_dating_agent() -> DatingLLM:
     config_file: Path = Path("configuration", "user_pref.txt")
 
@@ -171,6 +174,8 @@ def main() -> None:
         for session in sessions:
             try:
                 with session as active_session:
+                    if TRY_MESSAGE_BACK:
+                        session.get_messaged_matches()
                     __perform_round(active_session, settings)
             except Exception as e:
                 print(f"got exception {e}")

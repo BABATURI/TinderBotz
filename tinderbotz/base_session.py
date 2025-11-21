@@ -7,6 +7,8 @@ import undetected_chromedriver as uc
 from selenium.common.exceptions import *
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
 from tinderbotz.helpers.constants_helper import Printouts
 from tinderbotz.helpers.geomatch import Geomatch
@@ -105,6 +107,15 @@ class BaseSession:
     def does_support_message_on_like(self) -> bool:
         return False
 
+    def wait_for_elemnt(self, by, identifier, timeout=10):
+        try:
+            WebDriverWait(self.browser, timeout).until(
+                EC.presence_of_element_located((by, identifier)))
+            return True
+        except:
+            pass
+        return False
+    
     def set_custom_location(self, latitude, longitude, accuracy="100%"):
 
         params = {
