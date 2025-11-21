@@ -89,10 +89,8 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
             time.sleep(5)
             continue
 
-        is_liked: bool = decision_json["decision"]
-
         GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
-        StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, is_liked)
+        StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, decision_json)
 
         if decision_json["decision"] == "dislike":
             active_session.dislike()
