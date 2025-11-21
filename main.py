@@ -94,13 +94,15 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
         GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
         StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, is_liked)
 
-        if not is_liked:
+        if decision_json["decision"] == "dislike":
             active_session.dislike()
             continue
-
-        active_session.like(
-            message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
-        likes_cnt += 1
+        elif decision_json["decision"] == "like":
+            active_session.like(
+                message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
+            likes_cnt += 1
+        else:
+            pass
 
         if likes_cnt == max_likes:
             return
@@ -164,7 +166,7 @@ def main() -> None:
     log_file = __create_loggers()
     
     while True:
-        if datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end:
+        if not settings.bypass_active_hours and (datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end):
             print(f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
             time.sleep(settings.sleep_time)
             continue
