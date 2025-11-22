@@ -8,3 +8,4 @@
 - cupid: extract all info (kosher etc)
 - ambush a match, when online, send a user message if didnt answer previous message
 - integrate telegram bot to notify about matches
+- remove "headless" shit (ctl-f headless- useless)
