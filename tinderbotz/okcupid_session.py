@@ -13,6 +13,8 @@ from undetected_chromedriver import WebElement
 
 from tinderbotz.base_session import BaseSession
 from tinderbotz.helpers.geomatch import Geomatch
+from tinderbotz.helpers.match_data import MatchData
+from tinderbotz.helpers.storage_helper import StorageHelper
 
 logger = logging.getLogger(__file__)
 
@@ -28,6 +30,7 @@ class OkCupidSession(BaseSession):
 
     def __init__(self, headless=False, store_session=True, user_data=False):
         super().__init__(headless, store_session, user_data)
+        self._match_callback = None
 
     @property
     def app_url(self):
@@ -193,71 +196,140 @@ class OkCupidSession(BaseSession):
         # todo implement
         raise NotImplementedError()
 
-    def get_messaged_matches(self, amount: int = 100000) -> Optional[List[Geomatch]]:
-        # todo implement
+    def get_messaged_matches(self, amount: int = 100000) -> List[MatchData]:
         self.browser.get("https://www.okcupid.com/messages")
         # wait for page to load...
         match_xpath = "//button[@class='QRA_1G2GcewzF7FtefKy']"  # TODO: check me
         if not self.wait_for_elemnt(By.XPATH, match_xpath, timeout=10):
             return []
+
+        matches_data = []
+        buttons = self._get_match_buttons()[:amount]
         
-        online_span = ".//div[3]/div[1]/div/span[2]"
-        # click on match if online
+        for match_btn in buttons: 
+            match_data = self._extract_match_data(match_btn)
+            if match_data:
+                matches_data.append(match_data)
+
+        matches_data = StorageHelper.load_matches_data(self.app_name)
+        matches_data.update({m.user_id: m for m in matches_data})
+        StorageHelper.save_matches_data(self.app_name, matches_data)
+        return matches_data
+
+    def enable_ambush(self, callback=None):
+        if callback is None:
+            callback = self._ambush_action
+        self._match_callback = callback
+
+    def disable_ambush(self):
+        self._match_callback = None
+
+    def _ambush_action(self, match: MatchData, match_btn: WebElement) -> None:
+        """Default ambush action - checks criteria and sends message."""
+        if not self._is_match_online(match_btn):
+            return
+        
+        if not self._should_ambush(match):
+            return
+            
+        print(f"Ambushing {match.user_id}...")
+        
+        # TODO: get message from config
+        self.send_message(match.user_id, "היי, מה שלומך? :)")
+        
+        # Update stats
+        match.log_ambush_sent()
+        time.sleep(1)
+
+    def _get_match_buttons(self) -> List[WebElement]:
+        match_xpath = "//button[@class='QRA_1G2GcewzF7FtefKy']"
+        return self.browser.find_elements(By.XPATH, match_xpath)
+
+    def _is_match_online(self, match_btn: WebElement) -> bool:
+        online_span_xpath = ".//div[3]/div[1]/div/span[2]"
+        online_spans = match_btn.find_elements(By.XPATH, online_span_xpath)
+        return len(online_spans) > 0 and "onlinedot" in online_spans[0].get_attribute("class")
+
+    def _extract_match_data(self, match_btn: WebElement) -> Optional[MatchData]:
         msg_pane = "//div[@class='messenger-message-pane']"
-        a_go_to_profile = "//a[@class='_iImuSgqpB1KCDBnz0xl']"
-        # wait for msg pane to load
-        my_msgs = "//div[@class='jfAVQ9VA83skwKoCDID7 sccsTtkIJF2XQKf8MDHH']"
         close_msg_pane = "//button[@aria-label='Close chat window']"
+        a_go_to_profile = "//a[@class='_iImuSgqpB1KCDBnz0xl']"
+        all_msgs = "//div[contains(@class, 'jfAVQ9VA83skwKoCDID7')]"
+        my_msgs = "//div[@class='jfAVQ9VA83skwKoCDID7 sccsTtkIJF2XQKf8MDHH']"
         timestamp = ".//time[@class='ZX1D08o8i5JILb7ZXkkH']"
-        # go through my msgs, get LAST msg time (format: DAY - TIME AM/PM)
-        # compare to current time - if greater than 1 day, trigger callback to send message
-        for button in self.browser.find_elements(By.XPATH, match_xpath):
-            online_span = button.find_elements(By.XPATH, online_span)
-            if not (len(online_span) > 0 and "onlinedot" in online_span[0].get_attribute("class")):
-                continue
-            button.click()
+
+        try:
+            match_btn.click()
             if not self.wait_for_elemnt(By.XPATH, msg_pane, timeout=2):
-                continue
+                return None
+
             # get user id
             a = self.browser.find_element(By.XPATH, a_go_to_profile)
             user_id = a.get_attribute("data-userid")
             
+            msg_texts = [m.text for m in self.browser.find_elements(By.XPATH, all_msgs)]
+            
+            # get last message time
             msgs = self.browser.find_elements(By.XPATH, my_msgs)
-            if len(msgs) == 0:
-                continue
             last_time_str = None
-            for my_msg in reversed(msgs):
-                time_elems = my_msg.find_elements(By.XPATH, timestamp)
-                if len(time_elems) == 0:
-                    continue
-                last_time_str = time_elems[0].text
-                print(f"last msg time: {last_time_str}")
-                break
-            if last_time_str is None:
-                continue
-            # maybe format can be like 1 minute ago, 2 hours ago, yesterday, ...
-            if not " - " in last_time_str:
-                continue
-            day, time_part = last_time_str.split(" - ")
-            day = day.strip().lower()
-            # TODO: save state on matches to know if we sent them too many ambush msgs
-            if day not in ["today", "yesterday", _get_today_str()]:
-                # send message
-                print(f"sending message to match last messaged on {day} at {time_part}")
-                # TODO: get message from config
-                self.send_message(user_id, "היי, מה שלומך? :)")
-                time.sleep(1)
+            
+            if len(msgs) > 0:
+                for my_msg in reversed(msgs):
+                    time_elems = my_msg.find_elements(By.XPATH, timestamp)
+                    if len(time_elems) > 0:
+                        last_time_str = time_elems[0].text
+                        break
+            
+            match_data = self.get_match_data(user_id)
+            match_data.msg_texts = msg_texts
+            match_data.other_data['last_msg_time_str'] = last_time_str
+            # data is extracted, call callback
+            if self._match_callback:
+                self._match_callback(match_data, match_btn)
+            
+            return match_data
+            
+        except Exception as e:
+            print(f"Error extracting match data: {e}")
+            return None
+        finally:
             # close msg pane
             try:
                 self.browser.find_element(By.XPATH, close_msg_pane).click()
             except:
                 pass
-        # go back to main activity
-        self.browser.get(self.app_url)
-        time.sleep(1)
+
+    def _should_ambush(self, match: MatchData) -> bool:
+        if not match.is_ambush_allowed():
+            print(f"Skipping {match.user_id}: already sent ambush message")
+            return False
+            
+        last_time_str = match.other_data.get('last_msg_time_str')
+        if not last_time_str:
+            return False
+            
+        print(f"last msg time: {last_time_str}")
+        
+        if " - " not in last_time_str:
+            return False
+            
+        day, time_part = last_time_str.split(" - ")
+        day = day.strip().lower()
+        
+        if day in ["today", "yesterday", _get_today_str()]:
+            return False
+            
+        print(f"Match last messaged on {day} at {time_part}")
+        return True
+
+    def _open_chat(self, match_btn: WebElement) -> None:
+        # Click the match button to open chat
+        match_btn.click()
+        # Wait for the message pane to load
+        self.wait_for_elemnt(By.XPATH, "//div[@class='messenger-message-pane']", timeout=5)
 
     def send_message(self, chatid: str, message: str) -> None:
-        # todo implement
+        # todo implement fully
         # assumes we are on message pane already / or in profile page
         try:
             textarea_xpath = "//textarea[@id='messenger-composer']"

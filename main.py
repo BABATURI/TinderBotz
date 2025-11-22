@@ -175,6 +175,7 @@ def main() -> None:
             try:
                 with session as active_session:
                     if TRY_MESSAGE_BACK:
+                        session.enable_ambush()
                         session.get_messaged_matches()
                     __perform_round(active_session, settings)
             except Exception as e:

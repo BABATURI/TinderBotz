@@ -4,6 +4,7 @@ from dataclasses import asdict
 from typing import Dict, Any
 
 from tinderbotz.helpers.geomatch import Geomatch
+from tinderbotz.helpers.match_data import MatchData
 
 
 class StorageHelper:
@@ -56,3 +57,48 @@ class StorageHelper:
             print(f"Error loading match: {e}")
         return None
         
+
+    @staticmethod
+    def load_matches_data(app_name: str) -> Dict[str, MatchData]:
+        """
+        Loads match data for a specific app.
+        
+        Args:
+            app_name (str): The name of the app (e.g., 'okcupid', 'tinder').
+            
+        Returns:
+            Dict[str, MatchData]: A dictionary of user_id -> MatchData.
+        """
+        directory = os.path.join("data", app_name)
+        filepath = os.path.join(directory, "matches_data.json")
+        if not os.path.exists(filepath):
+            return {}
+            
+        try:
+            with open(filepath, "r", encoding='utf-8') as fp:
+                data = json.load(fp)
+                return {k: MatchData.from_dict(v) for k, v in data.items()}
+        except Exception as e:
+            print(f"Error loading matches data: {e}")
+            return {}
+
+    @staticmethod
+    def save_matches_data(app_name: str, data: Dict[str, MatchData]) -> None:
+        """
+        Saves match data for a specific app.
+        
+        Args:
+            app_name (str): The name of the app.
+            data (Dict[str, MatchData]): The data to save.
+        """
+        directory = os.path.join("data", app_name)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            
+        filepath = os.path.join(directory, "matches_data.json")
+        try:
+            json_data = {k: v.to_dict() for k, v in data.items()}
+            with open(filepath, 'w+', encoding="utf-8") as file:
+                json.dump(json_data, file, indent=4)
+        except Exception as e:
+            print(f"Error saving matches data: {e}")

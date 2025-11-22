@@ -13,6 +13,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from tinderbotz.helpers.constants_helper import Printouts
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.storage_helper import StorageHelper
+from tinderbotz.helpers.match_data import MatchData
 
 
 class BaseSession:
@@ -260,6 +261,29 @@ class BaseSession:
     # Utilities
     def _handle_potential_popups(self):
         raise NotImplementedError()
+
+    def get_match_data(self, user_id: str) -> MatchData:
+        """
+        Gets match data for a specific user.
+        """
+        matches_data = StorageHelper.load_matches_data(self.app_name)
+        return matches_data.get(user_id, MatchData(user_id=user_id))
+
+    def save_match_data(self, match_data: MatchData) -> None:
+        """
+        Saves match data for a specific user.
+        """
+        matches_data = StorageHelper.load_matches_data(self.app_name)
+        matches_data[match_data.user_id] = match_data
+        StorageHelper.save_matches_data(self.app_name, matches_data)
+
+    def is_ambush_allowed(self, user_id: str) -> bool:
+        """
+        Checks if we are allowed to send an ambush message to this user.
+        Returns True if we haven't sent one yet (count < 1).
+        """
+        match_data = self.get_match_data(user_id)
+        return match_data.ambush_count < 1
 
     def _get_msg_box(self, lines, indent=1, width=None, title=None):
         """Print message-box with optional title."""
