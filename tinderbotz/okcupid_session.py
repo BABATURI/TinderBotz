@@ -25,7 +25,6 @@ def _get_today_str() -> str:
 
 
 class OkCupidSession(BaseSession):
-    app_name: str = "okcupid"
     app_logged_in_match: str = "okcupid.com/discover"
 
     def __init__(self, headless=False, store_session=True, user_data=False):
@@ -35,6 +34,10 @@ class OkCupidSession(BaseSession):
     @property
     def app_url(self):
         return "https://www.okcupid.com/discover"
+
+    @property
+    def app_name(self) -> str:
+        return "okcupid"
 
     @property
     def does_support_message_on_like(self) -> bool:

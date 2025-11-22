@@ -105,6 +105,10 @@ class BaseSession:
         raise NotImplementedError()
 
     @property
+    def app_name(self) -> str:
+        raise NotImplementedError()
+
+    @property
     def does_support_message_on_like(self) -> bool:
         return False
 

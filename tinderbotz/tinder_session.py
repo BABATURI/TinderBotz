@@ -25,7 +25,6 @@ logger = logging.getLogger(__file__)
 
 
 class TinderSession(BaseSession):
-    app_name: str = "tinder"
     app_logged_in_match: str = "tinder.com/app"
     DELAY: int = 5
 
@@ -44,6 +43,10 @@ class TinderSession(BaseSession):
     @property
     def app_url(self) -> str:
         return "https://tinder.com/app/recs"
+
+    @property
+    def app_name(self) -> str:
+        return "tinder"
 
     # This will send notification when you get a match to your email used to logged in.
     def set_email_notifications(self, boolean: bool) -> None:

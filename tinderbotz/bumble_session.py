@@ -16,7 +16,6 @@ logger = logging.getLogger(__file__)
 
 
 class BumbleSession(BaseSession):
-    app_name: str = "bumble"
     app_logged_in_match: str = "bumble.com/app"
 
     def __init__(self, headless=False, store_session=True, user_data=False):
@@ -25,6 +24,10 @@ class BumbleSession(BaseSession):
     @property
     def app_url(self):
         return "https://bumble.com/app"
+
+    @property
+    def app_name(self) -> str:
+        return "bumble"
 
     def _is_logged_in(self) -> bool:
         # make sure bumble website is loaded for the first time
