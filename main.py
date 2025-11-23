@@ -8,10 +8,11 @@ from pathlib import Path
 from dating_llm.gemini_dating_llm import *
 from dating_llm.openrouter_dating_llm import OpenRouterDatingLLM
 from tinderbotz.base_session import BaseSession
+from tinderbotz.bumble_session import BumbleSession
 from tinderbotz.helpers.bot_settings import BotSettings
 from tinderbotz.helpers.storage_helper import StorageHelper
 from tinderbotz.okcupid_session import OkCupidSession
-from tinderbotz.tinder_session import Geomatch
+from tinderbotz.tinder_session import Geomatch, TinderSession
 
 TRY_MESSAGE_BACK = True
 
