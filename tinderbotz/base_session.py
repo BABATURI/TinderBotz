@@ -17,7 +17,7 @@ from tinderbotz.helpers.match_data import MatchData
 
 
 class BaseSession:
-    def __init__(self, headless=False, store_session=True):
+    def __init__(self, store_session=True):
         self.session_data = {
             "duration": 0,
             "like": 0,
@@ -32,7 +32,6 @@ class BaseSession:
 
         self.started = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
-        self.headless = headless
         self.store_session = store_session
         self.user_data: Optional[str] = os.path.join(Path().absolute(), "chrome_profile")
 
@@ -53,9 +52,6 @@ class BaseSession:
         # options.add_argument("--start-maximized")
         options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
         options.add_argument("--lang=en-GB")
-
-        if self.headless:
-            options.headless = True
 
         # Getting the chromedriver from cache or download it from internet
         print("Getting ChromeDriver ...")

@@ -18,8 +18,8 @@ logger = logging.getLogger(__file__)
 class BumbleSession(BaseSession):
     app_logged_in_match: str = "bumble.com/app"
 
-    def __init__(self, headless=False, store_session=True):
-        super().__init__(headless, store_session)
+    def __init__(self, store_session=True):
+        super().__init__(store_session)
 
     @property
     def app_url(self):

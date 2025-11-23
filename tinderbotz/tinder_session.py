@@ -28,7 +28,7 @@ class TinderSession(BaseSession):
     app_logged_in_match: str = "tinder.com/app"
     DELAY: int = 5
 
-    def __init__(self, headless: bool = False, store_session: bool = True) -> None:
+    def __init__(self, store_session: bool = True) -> None:
         self.email: Optional[str] = None
         self.may_send_email: bool = False
         self.session_data: dict[str, int] = {
@@ -38,7 +38,7 @@ class TinderSession(BaseSession):
             "superlike": 0
         }
 
-        super().__init__(headless, store_session)
+        super().__init__(store_session)
 
     @property
     def app_url(self) -> str:

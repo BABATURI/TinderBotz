@@ -27,8 +27,8 @@ def _get_today_str() -> str:
 class OkCupidSession(BaseSession):
     app_logged_in_match: str = "okcupid.com/discover"
 
-    def __init__(self, headless=False, store_session=True):
-        super().__init__(headless, store_session)
+    def __init__(self, store_session=True):
+        super().__init__(store_session)
         self._match_callback = None
 
     @property

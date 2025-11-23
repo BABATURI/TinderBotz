@@ -42,11 +42,9 @@ from tinderbot.session import Session
 session = Session()
 ```
 **Optional parameters**</br>
-`headless`: *boolean*</br>
 `store_session`: *boolean*</br>
 
 **Example usage**</br>
-***headless*** might not work properly, so recommended to leave it on False. </br>
 ***store_session*** will store your cookies in a directory, so next time you don't need to login again. </br>
 ```
 
