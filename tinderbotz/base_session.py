@@ -17,7 +17,7 @@ from tinderbotz.helpers.match_data import MatchData
 
 
 class BaseSession:
-    def __init__(self, headless=False, store_session=True, user_data=False):
+    def __init__(self, headless=False, store_session=True):
         self.session_data = {
             "duration": 0,
             "like": 0,
@@ -34,22 +34,20 @@ class BaseSession:
 
         self.headless = headless
         self.store_session = store_session
-        self.user_data = user_data
+        self.user_data: Optional[str] = os.path.join(Path().absolute(), "chrome_profile")
 
     def __enter__(self) -> 'BaseSession':
         # Go further with the initialisation
         # Setting some options of the browser here below
-
         options = uc.ChromeOptions()
 
-        # Create empty profile to avoid annoying Mac Popup
         if self.store_session:
-            if not self.user_data:
-                self.user_data = f"{Path().absolute()}/chrome_profile/"
-            if not os.path.isdir(self.user_data):
+            # Create empty profile to avoid annoying Mac Popup
+            if not os.path.exists(self.user_data):
                 os.mkdir(self.user_data)
+            else:
+                options.add_argument("--disable-notifications")
 
-            Path(f'{self.user_data}First Run').touch()
             options.add_argument(f"--user-data-dir={self.user_data}")
 
         # options.add_argument("--start-maximized")
@@ -73,6 +71,8 @@ class BaseSession:
         time.sleep(1)
 
         print("Started session: {}\n\n".format(self.started))
+        self.browser.maximize_window()
+
         self.browser.get(self.app_url)
 
         return self
@@ -120,7 +120,7 @@ class BaseSession:
         except:
             pass
         return False
-    
+
     def set_custom_location(self, latitude, longitude, accuracy="100%"):
 
         params = {
@@ -148,10 +148,10 @@ class BaseSession:
     def store_local(self, match: Geomatch):
         filename: str = match.match_type
         StorageHelper.store_match(match, directory=os.path.join("data", filename), filename=filename)
-    
+
     def _random_sleep(self):
-            time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
-        
+        time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
+
     def like(self, randomize_sleep=True, message: Optional[str] = None) -> bool:
         if message:
             raise NotImplementedError()

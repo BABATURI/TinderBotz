@@ -1,8 +1,8 @@
+import datetime
 import logging
 import random
 import time
-import datetime
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Dict
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
@@ -27,8 +27,8 @@ def _get_today_str() -> str:
 class OkCupidSession(BaseSession):
     app_logged_in_match: str = "okcupid.com/discover"
 
-    def __init__(self, headless=False, store_session=True, user_data=False):
-        super().__init__(headless, store_session, user_data)
+    def __init__(self, headless=False, store_session=True):
+        super().__init__(headless, store_session)
         self._match_callback = None
 
     @property
@@ -78,7 +78,11 @@ class OkCupidSession(BaseSession):
                 time.sleep(random.uniform(self.lower_sleep_time, self.upper_sleep_time))
         else:
             FIRST_IMAGE_INTRO_XPATH: str = '//*[@id="quickmatch-aria-tabpanel"]/div/div/div[1]/div[2]/div/div[2]/div/div[1]/button'
-            self.browser.find_element(By.XPATH, FIRST_IMAGE_INTRO_XPATH).click()
+            element = WebDriverWait(self.browser, 10).until(
+                EC.element_to_be_clickable((By.XPATH, FIRST_IMAGE_INTRO_XPATH))
+            )
+            element.click()
+
             time.sleep(0.5)
             INTRO_MESSAGE_BOX_XPATH: str = '//*[@id="messenger-composer"]'
             # TODO: fix crash here sometimes, DO NOT SEND EMOJIS!!!

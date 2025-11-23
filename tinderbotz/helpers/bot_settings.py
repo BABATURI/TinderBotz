@@ -14,6 +14,7 @@ class BotSettings:
     bypass_active_hours: bool = False
     sessions: List[str] = field(default_factory=list)
     image_count_to_use: int = 3
+    allow_ambush: bool = False
 
     def __str__(self):
         return f"{json.dumps({x: y for x, y in asdict(self).items() if y not in (None, '', [])}, indent=4)}"

@@ -112,6 +112,7 @@ def __load_sessions(settings: BotSettings) -> List[BaseSession]:
         session_type = session_map.get(session_name.lower())
         if session_type:
             sessions.append(session_type())
+
     if len(sessions) == 0:
         print("Warning: No sessions specified in settings file")
         sessions = [session_type() for _, session_type in session_map.items()]
@@ -156,7 +157,7 @@ def main() -> None:
     # todo- handle no more likes left/no options are left
     settings = __load_bot_settings()
     sessions = __load_sessions(settings)
-    log_file = __create_loggers()
+    __create_loggers()
 
     while True:
         if not settings.bypass_active_hours and (
@@ -169,8 +170,8 @@ def main() -> None:
         for session in sessions:
             try:
                 with session as active_session:
-                    if TRY_MESSAGE_BACK:
-                        session.enable_ambush()
+                    if settings.allow_ambush:
+                        session.enable_ambush() # todo- fix only for cupid here
                         session.get_messaged_matches()
                     __perform_round(active_session, settings)
             except Exception as e:
