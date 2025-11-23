@@ -1,5 +1,4 @@
 import json
-import logging
 import time
 import traceback
 from dataclasses import asdict
@@ -20,18 +19,13 @@ TRY_MESSAGE_BACK = True
 
 
 def __create_dating_agent() -> DatingLLM:
-    config_file: Path = Path("configuration", "user_pref.txt")
+    user_pref: Path = Path("configuration", "user_pref.txt")
 
-    user_pref: str = "I like fit and slim, blonde / hazel haired women with bright eyes who enjoy outdoor activities and have a good sense of humor."
-    if config_file.exists():
-        with open(config_file, "r") as f:
-            user_pref = f.read()
-    else:
-        print("Creating default user preference file...")
-        with open(config_file, "w") as f:
-            f.write(user_pref)
+    if not user_pref.exists():
+        raise Exception(f"Create user pref file at {user_pref}")
 
-    return ORDatingLLM(user_pref)
+    with open(user_pref, "r") as f:
+        return ORDatingLLM(f.read())
 
 
 def __load_bot_settings() -> BotSettings:
@@ -74,12 +68,11 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
     location: Tuple[float, float] = settings.location
     active_session.set_custom_location(latitude=location[0], longitude=location[1])
 
-    active_session.wait_for_login()
-
     dating_agent: DatingLLM = __create_dating_agent()
 
     likes_cnt: int = 0
 
+    active_session.wait_for_login()
     for _ in range(max_swipes):
         geomatch: Geomatch = active_session.get_geomatch()
 
@@ -126,37 +119,37 @@ def __load_sessions(settings: BotSettings) -> List[BaseSession]:
 
 
 def __create_loggers(log_dir: Path = Path("logs")) -> Path:
-        """
-        Configure root logger: DEBUG -> file, INFO -> console.
-        Clears existing handlers to avoid duplicate logs when reloading.
-        """
-        log_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_file = log_dir / f"log_{timestamp}.txt"
+    """
+    Configure root logger: DEBUG -> file, INFO -> console.
+    Clears existing handlers to avoid duplicate logs when reloading.
+    """
+    log_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_dir / f"log_{timestamp}.txt"
 
-        root_logger = logging.getLogger()
-        # remove existing handlers to avoid duplicate entries (useful in REPL / hot-reload)
-        if root_logger.handlers:
-            root_logger.handlers.clear()
+    root_logger = logging.getLogger()
+    # remove existing handlers to avoid duplicate entries (useful in REPL / hot-reload)
+    if root_logger.handlers:
+        root_logger.handlers.clear()
 
-        root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(logging.DEBUG)
 
-        # file handler (verbose)
-        file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        file_handler.setFormatter(file_formatter)
-        root_logger.addHandler(file_handler)
+    # file handler (verbose)
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(file_formatter)
+    root_logger.addHandler(file_handler)
 
-        # console handler (concise)
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
-        console_formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
-        console_handler.setFormatter(console_formatter)
-        root_logger.addHandler(console_handler)
+    # console handler (concise)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
 
-        logging.debug("Initialized logging. Log file: %s", log_file)
-        return log_file
+    logging.debug("Initialized logging. Log file: %s", log_file)
+    return log_file
 
 
 def main() -> None:
@@ -164,13 +157,15 @@ def main() -> None:
     settings = __load_bot_settings()
     sessions = __load_sessions(settings)
     log_file = __create_loggers()
-    
+
     while True:
-        if not settings.bypass_active_hours and (datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end):
-            print(f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
+        if not settings.bypass_active_hours and (
+                datetime.now().hour < settings.active_hours_start or datetime.now().hour >= settings.active_hours_end):
+            print(
+                f"hour {datetime.now().hour} is not during work hours ({settings.active_hours_start} to {settings.active_hours_end})")
             time.sleep(settings.sleep_time)
             continue
-        
+
         for session in sessions:
             try:
                 with session as active_session:

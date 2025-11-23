@@ -22,7 +22,7 @@ class ORDatingLLM(DatingLLM):
     decision: <like or dislike>
     reason: <a brief explanation of the decision>
     like_message: <first message in hebrew to send to the match. it should be a cheesy and funny pickup line
-    that shows you read the profile. do not add emojies, do not write the match's name.>
+    that shows you read the profile. do not add emojies, do not write the match's name. don't make it over sexual>
 
     Profile Info:
     ```
