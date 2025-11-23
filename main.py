@@ -116,12 +116,12 @@ def __load_sessions(settings: BotSettings) -> List[BaseSession]:
     }
     sessions: List[BaseSession] = []
     for session_name in settings.sessions:
-        session_class = session_map.get(session_name.lower())
-        if session_class:
-            sessions.append(session_class())
-    if sessions == []:
+        session_type = session_map.get(session_name.lower())
+        if session_type:
+            sessions.append(session_type())
+    if len(sessions) == 0:
         print("Warning: No sessions specified in settings file")
-        sessions = [TinderSession(), OkCupidSession(), BumbleSession()]
+        sessions = [session_type() for _, session_type in session_map.items()]
     return sessions
 
 
