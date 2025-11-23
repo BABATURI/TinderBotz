@@ -1,16 +1,16 @@
-import os
+import json
 import logging
+import os
 from typing import List, Dict, Any, Tuple, Optional
 
+import openai
 from dotenv import load_dotenv
 from openai import OpenAI
-import openai
-import json
-from dating_llm.agent_utils import response_to_json
-from dating_llm.agent import DatingLLM
+
+from dating_llm.dating_llm import DatingLLM
 
 
-class ORDatingLLM(DatingLLM):
+class OpenRouterDatingLLM(DatingLLM):
     PROMT_TEMPLATE: str = """
     You are a dating assistant AI. your Job is to decide whether to like or dislike a profile based on the bio and images provided, and the user's preferences.
     Respond with 'like' or 'dislike' only.
@@ -21,8 +21,8 @@ class ORDatingLLM(DatingLLM):
     The output should look like so: (new line after each field, only these fileds below):
     decision: <like or dislike>
     reason: <a brief explanation of the decision>
-    like_message: <first message in hebrew to send to the match. it should be a cheesy and funny pickup line
-    that shows you read the profile. do not add emojies, do not write the match's name. don't make it over sexual>
+    like_message: <first message in hebrew to send to the match. she is a girl. it should be a cheesy and funny pickup line
+    that shows you read the profile. do not add emojies, do not write the match's name. don't make it over sexual.>
 
     Profile Info:
     ```
@@ -35,6 +35,7 @@ class ORDatingLLM(DatingLLM):
                             ]
     
     def __init__(self, user_pref: str) -> None:
+        super().__init__()
         self._user_pref: str = user_pref
         self._model_idx = 0
         load_dotenv()
@@ -45,9 +46,6 @@ class ORDatingLLM(DatingLLM):
         )
 
     def close(self) -> None:
-        self.client.close()
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.client.close()
 
     def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:

@@ -5,15 +5,13 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 
-from dating_llm.agent import *
-from dating_llm.openrouter_agent import ORDatingLLM
+from dating_llm.gemini_dating_llm import *
+from dating_llm.openrouter_dating_llm import OpenRouterDatingLLM
 from tinderbotz.base_session import BaseSession
-from tinderbotz.bumble_session import BumbleSession
 from tinderbotz.helpers.bot_settings import BotSettings
 from tinderbotz.helpers.storage_helper import StorageHelper
 from tinderbotz.okcupid_session import OkCupidSession
-from tinderbotz.tinder_session import Geomatch, TinderSession
-
+from tinderbotz.tinder_session import Geomatch
 
 TRY_MESSAGE_BACK = True
 
@@ -25,7 +23,7 @@ def __create_dating_agent() -> DatingLLM:
         raise Exception(f"Create user pref file at {user_pref}")
 
     with open(user_pref, "r") as f:
-        return ORDatingLLM(f.read())
+        return OpenRouterDatingLLM(f.read())
 
 
 def __load_bot_settings() -> BotSettings:

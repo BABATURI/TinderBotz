@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 from typing import List, Dict, Any, Tuple, Optional
 
 from dotenv import load_dotenv
@@ -7,9 +7,10 @@ from google import genai
 from google.genai import types
 
 from dating_llm.agent_utils import response_to_json, get_image_data
+from dating_llm.dating_llm import DatingLLM
 
 
-class DatingLLM:
+class GeminiDatingLLM(DatingLLM):
     PROMT_TEMPLATE: str = """You are a dating assistant AI. your Job is to decide whether to like or dislike a profile based on the bio and images provided, and the user's preferences.
     Respond with 'like' or 'dislike' only.
     The user prefrences are" {user_preferences}
@@ -19,7 +20,7 @@ class DatingLLM:
     ```
     decision: <like or dislike>
     reason: <a brief explanation of the decision>
-    like_message: <first message in hebrew to send to the match. it should be a cheesy and funny pickup line
+    like_message: <first message in hebrew to send to the match. she is a girl. it should be a cheesy and funny pickup line
     that shows you read the profile. do not add emojies, do not write the match's name. don't make it over sexual>
     ```
     """
@@ -33,6 +34,7 @@ class DatingLLM:
                             ]
     
     def __init__(self, user_pref: str) -> None:
+        super().__init__()
         self._user_pref: str = user_pref
         self._model_idx = 1
         load_dotenv()
@@ -40,9 +42,6 @@ class DatingLLM:
         self.client: genai.Client = genai.Client(api_key=api_key)
 
     def close(self) -> None:
-        self.client.close()
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.client.close()
 
     def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:

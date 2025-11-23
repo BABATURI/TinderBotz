@@ -81,7 +81,7 @@ class OkCupidSession(BaseSession):
             element = WebDriverWait(self.browser, 10).until(
                 EC.element_to_be_clickable((By.XPATH, FIRST_IMAGE_INTRO_XPATH))
             )
-            element.click()
+            self.browser.execute_script("arguments[0].click();", element)
 
             time.sleep(0.5)
             INTRO_MESSAGE_BOX_XPATH: str = '//*[@id="messenger-composer"]'
@@ -129,7 +129,7 @@ class OkCupidSession(BaseSession):
         assert self._is_logged_in()
 
         name_xpath = "//h2[@class='card-content-header__text']"
-        WebDriverWait(self.browser, 5).until(
+        WebDriverWait(self.browser, 10).until(
             EC.presence_of_element_located((By.XPATH, "//div[@class='dt-photo dt-photo-superlikes']")))
         # name, age
         name = self.browser.find_element(By.XPATH, name_xpath).text
