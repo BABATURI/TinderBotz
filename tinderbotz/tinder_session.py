@@ -83,7 +83,10 @@ class TinderSession(BaseSession):
     def add_photo(self, filepath: str) -> None:
         helper = TinderProfileHelper(browser=self.browser)
         helper.add_photo(filepath)
-
+    
+    def _is_out_of_matches(self) -> bool:
+        return len(self.browser.find_elements(By.XPATH, "//div[@class='lxn9zzn']")) > 0
+    
     def _is_logged_in(self) -> bool:
         # make sure tinder website is loaded for the first time
         if not self.app_logged_in_match in self.browser.current_url:
@@ -99,6 +102,7 @@ class TinderSession(BaseSession):
 
     def get_geomatch(self) -> Geomatch:
         assert self._is_logged_in()
+        assert not self._is_out_of_matches()
 
         if "/app/recs" not in self.browser.current_url:
             self.browser.get(self.app_url)
