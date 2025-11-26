@@ -49,7 +49,8 @@ def __get_response_from_dating_agent(dllm: DatingLLM, settings: BotSettings, geo
                                                       bio=geomatch.bio,
                                                       lifestyle=geomatch.lifestyle,
                                                       passions=geomatch.passions,
-                                                      looking_for=geomatch.looking_for)
+                                                      looking_for=geomatch.looking_for,
+                                                      prompts=geomatch.prompts)
 
     query: str = (f"Full profile info:\n"
                   f"{json.dumps({x: y for x, y in asdict(minimized_duplicate_geomatch).items() if y not in (None, '', [])}, indent=4)}")
