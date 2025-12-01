@@ -1,13 +1,14 @@
 import json
 import logging
 import os
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Tuple, Optional
 
 import openai
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from dating_llm.dating_llm import DatingLLM
+from dating_llm.decision_reponse import DecisionResponse
 
 
 class OpenRouterDatingLLM(DatingLLM):
@@ -29,7 +30,7 @@ class OpenRouterDatingLLM(DatingLLM):
     def close(self) -> None:
         self.client.close()
 
-    def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:
+    def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[DecisionResponse, int]:
         try:
             return self._run_llm(profile_bio, images_urls)
         except (openai.APITimeoutError, openai.RateLimitError):
@@ -38,7 +39,7 @@ class OpenRouterDatingLLM(DatingLLM):
             logging.info(f"Switched to model: {self.model_list[self._model_idx]}")
         return self._run_llm(profile_bio, images_urls)
 
-    def _run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:
+    def _run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[DecisionResponse, int]:
         selected_model: str = self.model_list[self._model_idx]
 
         user_prompt: str = self.PROMT_TEMPLATE.format(
@@ -78,4 +79,4 @@ class OpenRouterDatingLLM(DatingLLM):
             )
             text = completion.choices[0].message.content
             token_usage: int = completion.usage.total_tokens
-        return json.loads(text), token_usage
+        return DecisionResponse(**json.loads(text)), token_usage

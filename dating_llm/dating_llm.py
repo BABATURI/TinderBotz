@@ -1,4 +1,6 @@
-from typing import List, Dict, Any, Tuple
+from typing import List, Tuple
+
+from dating_llm.decision_reponse import DecisionResponse
 
 
 # todo: moved shared logic
@@ -32,5 +34,5 @@ class DatingLLM:
     def close(self) -> None:
         raise NotImplementedError()
 
-    def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:
+    def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[DecisionResponse, int]:
         raise NotImplementedError()

@@ -1,25 +1,26 @@
 import logging
 import os
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Any, Tuple, Optional
 
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from dating_llm.agent_utils import response_to_json, get_image_data
+from dating_llm.agent_utils import get_image_data, response_to_json
 from dating_llm.dating_llm import DatingLLM
+from dating_llm.decision_reponse import DecisionResponse
 
 
 class GeminiDatingLLM(DatingLLM):
     model_list: List[str] = [
-                            "gemini-2.5-pro",
-                            "gemini-2.5-flash",
-                            "gemini-2.5-flash-preview-09-2025",
-                            "gemini-2.5-flash-lite",
-                            "gemini-2.0-flash",
-                            "gemini-2.0-flash-lite",
-                            ]
-    
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-preview-09-2025",
+        "gemini-2.5-flash-lite",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
+    ]
+
     def __init__(self, user_pref: str) -> None:
         super().__init__()
         self._user_pref: str = user_pref
@@ -31,7 +32,7 @@ class GeminiDatingLLM(DatingLLM):
     def close(self) -> None:
         self.client.close()
 
-    def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:
+    def run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[DecisionResponse, int]:
         try:
             return self._run_llm(profile_bio, images_urls)
         except (genai.errors.ClientError, genai.errors.ServerError):
@@ -40,7 +41,7 @@ class GeminiDatingLLM(DatingLLM):
             logging.info(f"Switched to model: {self.model_list[self._model_idx]}")
         return self._run_llm(profile_bio, images_urls)
 
-    def _run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[Dict[str, Any], int]:
+    def _run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[DecisionResponse, int]:
         selected_model: str = self.model_list[self._model_idx]  # Using "gemini-2.5-flash" as default for now
 
         user_prompt: str = self.PROMT_TEMPLATE.format(
@@ -75,9 +76,9 @@ class GeminiDatingLLM(DatingLLM):
             print("Empty response received, retrying...")
             # retry once
             response = self.client.models.generate_content(
-            model=selected_model,
-            contents=contents,
+                model=selected_model,
+                contents=contents,
             )
 
         token_usage: int = response.usage_metadata.total_token_count
-        return response_to_json(response.text), token_usage
+        return DecisionResponse(**response_to_json(response.text)), token_usage

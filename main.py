@@ -17,14 +17,13 @@ from tinderbotz.tinder_session import Geomatch, TinderSession
 TRY_MESSAGE_BACK = True
 
 
-def __create_dating_agent() -> DatingLLM:
+def __get_user_pref() -> str:
     user_pref: Path = Path("configuration", "user_pref.txt")
-
     if not user_pref.exists():
         raise Exception(f"Create user pref file at {user_pref}")
 
     with open(user_pref, "r") as f:
-        return OpenRouterDatingLLM(f.read())
+        return f.read()
 
 
 def __load_bot_settings() -> BotSettings:
@@ -40,7 +39,7 @@ def __load_bot_settings() -> BotSettings:
         return default_settings
 
 
-def __get_response_from_dating_agent(dllm: DatingLLM, settings: BotSettings, geomatch: Geomatch) -> Dict[str, Any]:
+def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) -> DecisionResponse:
     # Note: to save tokens we don't save everything - only what matters
     minimized_duplicate_geomatch: Geomatch = Geomatch(name=geomatch.name,
                                                       age=geomatch.age,
@@ -54,11 +53,22 @@ def __get_response_from_dating_agent(dllm: DatingLLM, settings: BotSettings, geo
 
     query: str = (f"Full profile info:\n"
                   f"{json.dumps({x: y for x, y in asdict(minimized_duplicate_geomatch).items() if y not in (None, '', [])}, indent=4)}")
-    image_urls: List[str] = geomatch.image_urls[:settings.image_count_to_use]
+    assert settings.image_count_to_use > 1, "You must let the bot see an image, or else whats the point?"
+    image_urls: List[str] = geomatch.image_urls[:settings.image_count_to_use - 1] + [geomatch.image_urls[-1]]
 
-    ai_json_response, total_tokens = dllm.run_llm(query, image_urls)
-    print(f"Total tokens used: {total_tokens}")
-    return ai_json_response
+    user_pref: str = __get_user_pref()
+    ai_json_response, total_tokens = OpenRouterDatingLLM(user_pref).run_llm(query, image_urls)
+    print(f"Total tokens used by Open Router: {total_tokens}")
+
+    if not ai_json_response.is_like:
+        return ai_json_response
+
+    print("Making sure with gemini")
+
+    gemini_ai_json_response, gemini_total_tokens = GeminiDatingLLM(user_pref).run_llm(query, image_urls)
+    print(f"Total tokens used by Gemini: {gemini_total_tokens}")
+
+    return ai_json_response if gemini_ai_json_response.is_like else gemini_ai_json_response
 
 
 def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
@@ -68,37 +78,34 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
     location: Tuple[float, float] = settings.location
     active_session.set_custom_location(latitude=location[0], longitude=location[1])
 
-    dating_agent: DatingLLM = __create_dating_agent()
-
     likes_cnt: int = 0
 
     active_session.wait_for_login()
     for _ in range(max_swipes):
-        geomatch: Geomatch = active_session.get_geomatch()
+        try:
+            geomatch: Geomatch = active_session.get_geomatch()
 
-        print("running dating LLM query...")
-        decision_json: Dict[str, Any] = __get_response_from_dating_agent(dating_agent, settings, geomatch)
+            print("running dating LLM query...")
+            decision: DecisionResponse = __get_response_from_dating_agent(settings, geomatch)
 
-        print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision_json}")
-        if decision_json.get("decision", "") not in ("like", "dislike"):
+            print(f"Decision for {geomatch.name}, age {geomatch.age}:\n{decision}")
+
+            GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
+            StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, decision)
+
+            if decision.is_like:
+                active_session.like(
+                    message=decision.like_message if active_session.does_support_message_on_like else None)
+                likes_cnt += 1
+            else:
+                active_session.dislike()
+
+            if likes_cnt == max_likes:
+                return
+        except Exception as e:
+            print(f'got exeption {e}')
             active_session.browser.refresh()
             time.sleep(5)
-            continue
-
-        GEOMATCHES_STORAGE_DIR: str = os.path.join(Path(os.path.abspath(__file__)).parent, "data")
-        StorageHelper.store_match(geomatch, GEOMATCHES_STORAGE_DIR, decision_json)
-
-        if decision_json["decision"] == "dislike":
-            active_session.dislike()
-        elif decision_json["decision"] == "like":
-            active_session.like(
-                message=decision_json.get("like_message", "") if active_session.does_support_message_on_like else None)
-            likes_cnt += 1
-        else:
-            pass
-
-        if likes_cnt == max_likes:
-            return
 
 
 def __load_sessions(settings: BotSettings) -> List[BaseSession]:
@@ -171,7 +178,7 @@ def main() -> None:
             try:
                 with session as active_session:
                     if settings.allow_ambush:
-                        session.enable_ambush() # todo- fix only for cupid here
+                        session.enable_ambush()  # todo- fix only for cupid here
                         session.get_messaged_matches()
                     __perform_round(active_session, settings)
             except Exception as e:

@@ -3,18 +3,18 @@ import os
 from dataclasses import asdict
 from typing import Dict, Any
 
+from dating_llm.decision_reponse import DecisionResponse
 from tinderbotz.helpers.geomatch import Geomatch
 from tinderbotz.helpers.match_data import MatchData
 
 
 class StorageHelper:
     @staticmethod
-    def store_match(match: Geomatch, directory: str, des_json: Dict[str, str]) -> None:
+    def store_match(match: Geomatch, directory: str, decision: DecisionResponse) -> None:
         if not os.path.exists(directory):
             os.makedirs(directory)
         
-        is_liked: bool = des_json["decision"] == "like"
-        filepath: str = os.path.join(directory, f"{match.match_type}_{'liked' if is_liked else 'disliked'}.json")
+        filepath: str = os.path.join(directory, f"{match.match_type}_{'liked' if decision.is_like else 'disliked'}.json")
         try:
             with open(filepath, "r", encoding='utf-8') as fp:
                 data: Dict[str, Any] = json.load(fp)
@@ -23,7 +23,7 @@ class StorageHelper:
             data = {}
         try:
             match_json = asdict(match)
-            match_json.update(des_json)
+            match_json.update(asdict(decision))
             data[match.id] = match_json
         except Exception as e:
             print(e)
