@@ -46,6 +46,7 @@ def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) 
                                                       work=geomatch.work,
                                                       study=geomatch.study,
                                                       bio=geomatch.bio,
+                                                      basics=geomatch.basics,
                                                       lifestyle=geomatch.lifestyle,
                                                       passions=geomatch.passions,
                                                       looking_for=geomatch.looking_for,
@@ -53,8 +54,12 @@ def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) 
 
     query: str = (f"Full profile info:\n"
                   f"{json.dumps({x: y for x, y in asdict(minimized_duplicate_geomatch).items() if y not in (None, '', [])}, indent=4)}")
+    
     assert settings.image_count_to_use > 1, "You must let the bot see an image, or else whats the point?"
-    image_urls: List[str] = geomatch.image_urls[:settings.image_count_to_use - 1] + [geomatch.image_urls[-1]]
+
+    image_urls: List[str] = geomatch.image_urls[:settings.image_count_to_use - 1]
+    if len(geomatch.image_urls) > 0:
+        image_urls.append(geomatch.image_urls[-1])
 
     user_pref: str = __get_user_pref()
     ai_json_response, total_tokens = OpenRouterDatingLLM(user_pref).run_llm(query, image_urls)
@@ -67,7 +72,8 @@ def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) 
 
     gemini_ai_json_response, gemini_total_tokens = GeminiDatingLLM(user_pref).run_llm(query, image_urls)
     print(f"Total tokens used by Gemini: {gemini_total_tokens}")
-
+    
+    ai_json_response.like_message = gemini_ai_json_response.like_message
     return ai_json_response if gemini_ai_json_response.is_like else gemini_ai_json_response
 
 
@@ -103,7 +109,8 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
             if likes_cnt == max_likes:
                 return
         except Exception as e:
-            print(f'got exeption {e}')
+            print(f'got exeption: {e}')
+            traceback.print_exc()
             active_session.browser.refresh()
             time.sleep(5)
 
@@ -182,7 +189,7 @@ def main() -> None:
                         session.get_messaged_matches()
                     __perform_round(active_session, settings)
             except Exception as e:
-                print(f"got exception {e}")
+                print(f"got exception: {e}")
                 traceback.print_exc()
 
         print("Sleeping till next session")

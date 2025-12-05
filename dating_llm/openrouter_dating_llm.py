@@ -8,12 +8,14 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from dating_llm.dating_llm import DatingLLM
+from dating_llm.agent_utils import response_to_json
 from dating_llm.decision_reponse import DecisionResponse
 
 
 class OpenRouterDatingLLM(DatingLLM):
     model_list: List[str] = [
-                            "x-ai/grok-4.1-fast",
+                            "amazon/nova-2-lite-v1:free",
+                            # "x-ai/grok-4.1-fast",
                             ]
     
     def __init__(self, user_pref: str) -> None:
@@ -79,4 +81,17 @@ class OpenRouterDatingLLM(DatingLLM):
             )
             text = completion.choices[0].message.content
             token_usage: int = completion.usage.total_tokens
-        return DecisionResponse(**json.loads(text)), token_usage
+            
+        logging.info(text)
+        return self._parse_response(text), token_usage
+
+    def _parse_response(self, response: str) -> DecisionResponse:
+        try:
+            return DecisionResponse(**json.loads(response))
+        except json.JSONDecodeError:
+            pass
+        except Exception as e:
+            print(f"Failed to parse response: {e}")
+        # fallback to line by line text parsing
+        return DecisionResponse(**response_to_json(response))
+                
