@@ -148,28 +148,25 @@ class OkCupidSession(BaseSession):
         bio = ""
         for a in self.browser.find_elements(By.XPATH, "//span[@class='dt-essay-text']"):
             bio = a.text
+        
         # get pics
+        # new algo: find divs with aria-label="photo of them"
+        # in the div, get the style attribute, get the url (format: background-image: url(&quot;<img-url>?cr=<?>&h=<?>quot;);)
         urls = []
-        first_photo_div = self.browser.find_element(By.XPATH, "//div[@class='dt-photo dt-photo-superlikes']")
-        # todo- handle selenium.common.exceptions.ElementNotInteractableException
-        try:
-            first_photo_div.click()
-        except Exception as e:
-            print(f"got exception {e}, retrying")
-            time.sleep(2)
-
-            first_photo_div.click()
-        #     wait for img elements to load
-        time.sleep(1)
-        for img in self.browser.find_elements(By.XPATH,
-                                              "//img[@class='fade-in-transition-300 fade-in-transition-ease fade-in-transition-appear-done fade-in-transition-enter-done']"):
-            img_url = img.get_attribute("src")
+        import re
+        photo_divs = self.browser.find_elements(By.XPATH, "//div[@aria-label='photo of them']")
+        for div in photo_divs:
+            style = div.get_attribute("style")
+            if not style:
+                continue
+            # Extract URL from background-image: url("...") format
+            match = re.search(r'url\(["\']?([^"\']+)["\']?\)', style)
+            if not match:
+                continue
+            img_url = match.group(1)
+            if "?" in img_url:
+                img_url = img_url.split("?")[0]
             urls.append(img_url)
-            time.sleep(0.25)
-        #     close pics
-        action = ActionChains(self.browser)
-        action.send_keys(Keys.ESCAPE).perform()
-        time.sleep(0.5)
         # get row data
         # basics, background, lifestyle, looking_for, ...
         rowdata = {}
@@ -189,6 +186,7 @@ class OkCupidSession(BaseSession):
             lifestyle=rowdata.get("lifestyle", ""),
             looking_for=rowdata.get("looking_for", ""),
             passions=rowdata.get("passions", ""),
+            looks=rowdata.get("looks", ""),
             bio=bio,
             prompts=self.__get_prompts()
         )

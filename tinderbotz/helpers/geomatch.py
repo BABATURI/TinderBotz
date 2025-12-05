@@ -17,6 +17,7 @@ class Geomatch:
     lifestyle: Optional[str] = None
     basics: Optional[str] = None
     looking_for: Optional[str] = None
+    looks: Optional[str] = None
     distance: Optional[float] = None
     passions: Optional[str] = None
     instagram: Optional[str] = None

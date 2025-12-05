@@ -49,6 +49,7 @@ def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) 
                                                       basics=geomatch.basics,
                                                       lifestyle=geomatch.lifestyle,
                                                       passions=geomatch.passions,
+                                                      looks=geomatch.looks,
                                                       looking_for=geomatch.looking_for,
                                                       prompts=geomatch.prompts)
 

@@ -50,7 +50,8 @@ class OpenRouterDatingLLM(DatingLLM):
         )
 
         contents = [{"type": "text", "text": user_prompt}]
-
+        logging.debug("images: %s", images_urls)
+        # does not support webp images
         for img_url in images_urls:
             contents.append({"type": "image_url", "image_url": {"url": img_url,},})
 
