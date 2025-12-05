@@ -109,7 +109,7 @@ class TinderSession(BaseSession):
             time.sleep(10)
 
         WebDriverWait(self.browser, 20.0).until(EC.presence_of_element_located(
-            (By.XPATH, "//div[@class='Bdrs(8px) Bgz(cv) Bgp(c) StretchedBox']")))
+            (By.XPATH, "//div[contains(@class, 'Bdrs(8px) Bgz(cv) Bgp(c) StretchedBox')]")))
 
         self._handle_potential_popups()
 
