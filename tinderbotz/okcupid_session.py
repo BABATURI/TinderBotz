@@ -179,6 +179,9 @@ class OkCupidSession(BaseSession):
             rowdata[category] = div.text  # maybe get child divs text
 
         # TODO: promtps - press a button to expand prompts? parse them them go back a page
+        _looks = rowdata.get("looks", "")
+        if "cm" in _looks:
+            rowdata["looks"] = _looks.split("cm")[0] + "cm"
         m = Geomatch(
             name=name, age=age, home=location,
             image_urls=urls,
