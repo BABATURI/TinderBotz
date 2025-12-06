@@ -15,7 +15,6 @@ class GeminiDatingLLM(DatingLLM):
     model_list: List[str] = [
         "gemini-2.5-pro",
         "gemini-2.5-flash",
-        "gemini-2.5-flash-preview-09-2025",
         "gemini-2.5-flash-lite",
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
@@ -27,7 +26,15 @@ class GeminiDatingLLM(DatingLLM):
         self._model_idx = 1
         load_dotenv()
         api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
+        try:
+            api_key2: Optional[str] = os.getenv("GEMINI_API_KEY2")
+        except:
+            api_key2 = None
         self.client: genai.Client = genai.Client(api_key=api_key)
+        if api_key2:
+            self.client2: genai.Client = genai.Client(api_key=api_key2)
+        else:
+            self.client2 = None
 
     def close(self) -> None:
         self.client.close()
@@ -37,8 +44,15 @@ class GeminiDatingLLM(DatingLLM):
             return self._run_llm(profile_bio, images_urls)
         except (genai.errors.ClientError, genai.errors.ServerError):
             print("Switching model and retrying...")
-            self._model_idx = (self._model_idx + 1) % len(self.model_list)
-            logging.info(f"Switched to model: {self.model_list[self._model_idx]}")
+            # self._model_idx = (self._model_idx + 1) % len(self.model_list)
+            if self.client2 is None:
+                logging.info(f"Switched to model: {self.model_list[self._model_idx]}")
+                self._model_idx = (self._model_idx + 1) % len(self.model_list)
+            else:
+                logging.info("Switched to second client")
+                temp = self.client
+                self.client = self.client2
+                self.client2 = temp
         return self._run_llm(profile_bio, images_urls)
 
     def _run_llm(self, profile_bio: str, images_urls: List[str]) -> Tuple[DecisionResponse, int]:

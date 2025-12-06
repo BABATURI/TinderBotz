@@ -18,15 +18,10 @@ from tinderbotz.helpers.match_data import MatchData
 
 class BaseSession:
     def __init__(self, store_session=True):
-        self.session_data = {
-            "duration": 0,
-            "like": 0,
-            "dislike": 0,
-            "superlike": 0
-        }
+        self.reset_stats()
         # self.app_url and self.app_name must be set by children
         self.lower_sleep_time = 1.0
-        self.upper_sleep_time = 3.0
+        self.upper_sleep_time = 4.0
 
         self.start_session = time.time()
 
@@ -35,6 +30,13 @@ class BaseSession:
         self.store_session = store_session
         self.user_data: Optional[str] = os.path.join(Path().absolute(), "chrome_profile")
 
+    def reset_stats(self):
+        self.session_data = {
+            "duration": 0,
+            "like": 0,
+            "dislike": 0,
+            "superlike": 0
+        }
     def __enter__(self) -> 'BaseSession':
         # Go further with the initialisation
         # Setting some options of the browser here below

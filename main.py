@@ -41,6 +41,7 @@ def __load_bot_settings() -> BotSettings:
 
 def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) -> DecisionResponse:
     # Note: to save tokens we don't save everything - only what matters
+    _looks = geomatch.looks if "cm" in geomatch.looks else None
     minimized_duplicate_geomatch: Geomatch = Geomatch(name=geomatch.name,
                                                       age=geomatch.age,
                                                       work=geomatch.work,
@@ -63,7 +64,9 @@ def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) 
         image_urls.append(geomatch.image_urls[-1])
 
     user_pref: str = __get_user_pref()
-    ai_json_response, total_tokens = OpenRouterDatingLLM(user_pref).run_llm(query, image_urls)
+    main_model = OpenRouterDatingLLM(user_pref)
+    verify_model = GeminiDatingLLM(user_pref)
+    ai_json_response, total_tokens = main_model.run_llm(query, image_urls)
     print(f"Total tokens used by Open Router: {total_tokens}")
 
     if not ai_json_response.is_like:
@@ -71,9 +74,10 @@ def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) 
 
     print("Making sure with gemini")
 
-    gemini_ai_json_response, gemini_total_tokens = GeminiDatingLLM(user_pref).run_llm(query, image_urls)
+    gemini_ai_json_response, gemini_total_tokens = verify_model.run_llm(query, image_urls)
     print(f"Total tokens used by Gemini: {gemini_total_tokens}")
     
+    # patch like message, because openrouter is shitty
     ai_json_response.like_message = gemini_ai_json_response.like_message
     return ai_json_response if gemini_ai_json_response.is_like else gemini_ai_json_response
 
