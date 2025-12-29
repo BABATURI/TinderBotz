@@ -41,7 +41,6 @@ def __load_bot_settings() -> BotSettings:
 
 def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) -> DecisionResponse:
     # Note: to save tokens we don't save everything - only what matters
-    _looks = geomatch.looks if "cm" in geomatch.looks else None
     minimized_duplicate_geomatch: Geomatch = Geomatch(name=geomatch.name,
                                                       age=geomatch.age,
                                                       work=geomatch.work,
@@ -189,9 +188,9 @@ def main() -> None:
         for session in sessions:
             try:
                 with session as active_session:
-                    if settings.allow_ambush:
-                        session.enable_ambush()  # todo- fix only for cupid here
-                        session.get_messaged_matches()
+                    if settings.allow_ambush and type(session) is OkCupidSession:
+                        session.enable_ambush()
+                        # session.get_messaged_matches()
                     __perform_round(active_session, settings)
             except Exception as e:
                 print(f"got exception: {e}")
