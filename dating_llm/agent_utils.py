@@ -75,5 +75,8 @@ def response_to_json(text: Any) -> Dict[str, Any]:
             continue
         key, value = line.split(':', 1)
         value = value.strip()
-        out[key.strip()] = value  # remove trailing comma if present
+        
+        if key.strip().lower() not in ["reason", "decision", "like_message"]:
+            continue
+        out[key.strip().lower()] = value
     return out

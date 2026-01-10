@@ -1,6 +1,7 @@
+import os
+import time
 import json
 import logging
-import os
 from typing import List, Tuple, Optional
 
 import openai
@@ -14,14 +15,15 @@ from dating_llm.decision_reponse import DecisionResponse
 
 class OpenRouterDatingLLM(DatingLLM):
     model_list: List[str] = [
-                            "amazon/nova-2-lite-v1:free",
-                            # "x-ai/grok-4.1-fast",
+                            # "google/gemma-3-27b-it:free",
+                            # "google/gemini-2.0-flash-exp:free",
+                            "x-ai/grok-4.1-fast",
                             ]
     
-    def __init__(self, user_pref: str) -> None:
+    def __init__(self, user_pref: str, model_idx: int = 0) -> None:
         super().__init__()
         self._user_pref: str = user_pref
-        self._model_idx = 0
+        self._model_idx = model_idx
         load_dotenv()
         api_key: Optional[str] = os.getenv("OPENROUTER_API_KEY")
         self.client: OpenAI = OpenAI(
@@ -63,7 +65,7 @@ class OpenRouterDatingLLM(DatingLLM):
                     "content": contents
                 }
             ],
-            response_format={"type": "json_object"}
+            # response_format={"type": "json_object"}
         )
         text = completion.choices[0].message.content
         token_usage: int = completion.usage.total_tokens
@@ -78,12 +80,13 @@ class OpenRouterDatingLLM(DatingLLM):
                         "content": contents
                     }
                 ],
-                response_format={"type": "json_object"}
+                # response_format={"type": "json_object"}
             )
             text = completion.choices[0].message.content
             token_usage: int = completion.usage.total_tokens
             
         logging.info(text)
+        time.sleep(10)
         return self._parse_response(text), token_usage
 
     def _parse_response(self, response: str) -> DecisionResponse:

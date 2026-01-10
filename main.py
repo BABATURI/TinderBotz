@@ -15,6 +15,7 @@ from tinderbotz.okcupid_session import OkCupidSession
 from tinderbotz.tinder_session import Geomatch, TinderSession
 
 TRY_MESSAGE_BACK = True
+TRUST_BUT_VERIFY = False
 
 
 def __get_user_pref() -> str:
@@ -66,12 +67,18 @@ def __get_response_from_dating_agent(settings: BotSettings, geomatch: Geomatch) 
     user_pref: str = __get_user_pref()
     main_model = OpenRouterDatingLLM(user_pref)
     verify_model = GeminiDatingLLM(user_pref)
+    if not TRUST_BUT_VERIFY:
+        main_model = OpenRouterDatingLLM(user_pref)
+    
     ai_json_response, total_tokens = main_model.run_llm(query, image_urls)
     print(f"Total tokens used by Open Router: {total_tokens}")
 
     if not ai_json_response.is_like:
         return ai_json_response
 
+    if not TRUST_BUT_VERIFY:
+        return ai_json_response
+    
     print("Making sure with gemini")
 
     gemini_ai_json_response, gemini_total_tokens = verify_model.run_llm(query, image_urls)
@@ -110,7 +117,8 @@ def __perform_round(active_session: BaseSession, settings: BotSettings) -> None:
                 likes_cnt += 1
             else:
                 active_session.dislike()
-
+            
+            time.sleep(3)
             if likes_cnt == max_likes:
                 return
         except Exception as e:
