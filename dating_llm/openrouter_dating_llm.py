@@ -15,12 +15,20 @@ from dating_llm.decision_reponse import DecisionResponse
 
 class OpenRouterDatingLLM(DatingLLM):
     model_list: List[str] = [
+<<<<<<< HEAD
                             # "google/gemma-3-27b-it:free",
                             # "google/gemini-2.0-flash-exp:free",
                             "x-ai/grok-4.1-fast",
                             ]
     
     def __init__(self, user_pref: str, model_idx: int = 0) -> None:
+=======
+        "amazon/nova-2-lite-v1",
+        "x-ai/grok-4.1-fast",
+    ]
+
+    def __init__(self, user_pref: str) -> None:
+>>>>>>> aa954e6fe591252624613a9fb0e80c24d434c328
         super().__init__()
         self._user_pref: str = user_pref
         self._model_idx = model_idx
@@ -55,7 +63,7 @@ class OpenRouterDatingLLM(DatingLLM):
         logging.debug("images: %s", images_urls)
         # does not support webp images
         for img_url in images_urls:
-            contents.append({"type": "image_url", "image_url": {"url": img_url,},})
+            contents.append({"type": "image_url", "image_url": {"url": img_url, }, })
 
         completion = self.client.chat.completions.create(
             model=selected_model,
@@ -84,7 +92,7 @@ class OpenRouterDatingLLM(DatingLLM):
             )
             text = completion.choices[0].message.content
             token_usage: int = completion.usage.total_tokens
-            
+
         logging.info(text)
         time.sleep(10)
         return self._parse_response(text), token_usage
@@ -98,4 +106,3 @@ class OpenRouterDatingLLM(DatingLLM):
             print(f"Failed to parse response: {e}")
         # fallback to line by line text parsing
         return DecisionResponse(**response_to_json(response))
-                
