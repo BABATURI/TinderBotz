@@ -2,6 +2,7 @@ import os
 import random
 import time
 from pathlib import Path
+from typing import Optional
 
 import undetected_chromedriver as uc
 from selenium.common.exceptions import *

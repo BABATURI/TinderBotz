@@ -1,0 +1,47 @@
+[project]
+name = "tinderbotz"
+version = "1.6"
+description = "Dating Apps automated bot and data scraper"
+readme = "README.md"
+requires-python = ">=3.8"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    { name = "Frederik Mees", email = "frederik.mees@gmail.com" }
+]
+keywords = ["Tinder", "Bumble", "OKCupid", "Automation", "bot"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "deepface",
+    "google-genai",
+    "numpy",
+    "openai",
+    "opencv-python",
+    "pillow==10.3.0",
+    "selenium==4.8.3",
+    "undetected-chromedriver==3.4.6",
+    "webdriver-manager==3.8.6",
+    "pillow",
+    "python-dotenv",
+    "requests",
+    "selenium",
+    "undetected-chromedriver==3.5.5",
+    "webdriver-manager==4.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/frederikme/TinderBotz"
+Download = "https://github.com/frederikme/TinderBotz/archive/1.6.tar.gz"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tinderbotz*", "dating_llm*"]

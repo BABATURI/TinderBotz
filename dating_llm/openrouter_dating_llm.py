@@ -15,20 +15,13 @@ from dating_llm.decision_reponse import DecisionResponse
 
 class OpenRouterDatingLLM(DatingLLM):
     model_list: List[str] = [
-<<<<<<< HEAD
-                            # "google/gemma-3-27b-it:free",
-                            # "google/gemini-2.0-flash-exp:free",
-                            "x-ai/grok-4.1-fast",
-                            ]
-    
-    def __init__(self, user_pref: str, model_idx: int = 0) -> None:
-=======
+        # "google/gemma-3-27b-it:free",
+        # "google/gemini-2.0-flash-exp:free",
         "amazon/nova-2-lite-v1",
         "x-ai/grok-4.1-fast",
     ]
 
-    def __init__(self, user_pref: str) -> None:
->>>>>>> aa954e6fe591252624613a9fb0e80c24d434c328
+    def __init__(self, user_pref: str, model_idx: int = 0) -> None:
         super().__init__()
         self._user_pref: str = user_pref
         self._model_idx = model_idx

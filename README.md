@@ -94,12 +94,23 @@ Currently at 30000 matches!</br>
 - Tinder account with Google or Facebook login enabled
 
 ### Installation
-#### Github
+
+#### Using [uv](https://docs.astral.sh/uv/) (Recommended)
 1. Clone or download the project
-2. Install the required packages
+2. Install dependencies into a virtual environment:
+```bash
+uv sync
 ```
+3. Run scripts with `uv run`:
+```bash
+uv run quickstart.py
+```
+
+#### Using pip (Alternative)
+```bash
 pip3 install -r requirements.txt
 ```
+
 
 ## Usage of Tinderbot
 ### Features

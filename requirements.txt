@@ -1,10 +1,10 @@
-selenium
-undetected-chromedriver==3.5.5
-webdriver-manager==4.0.1 
-Pillow
+
+# Note: Dependencies are managed in pyproject.toml and uv.lock using uv.
+# This file is maintained for backwards compatibility with pip.
+selenium==4.8.3
+undetected-chromedriver==3.4.6
+webdriver-manager==3.8.6
+Pillow==10.3.0
 deepface
 opencv-python
 numpy
-google-genai
-requests
-openai
