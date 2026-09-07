@@ -3,7 +3,6 @@ name = "tinderbotz"
 version = "1.6"
 description = "Dating Apps automated bot and data scraper"
 readme = "README.md"
-requires-python = ">=3.8"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
@@ -22,10 +21,6 @@ dependencies = [
     "numpy",
     "openai",
     "opencv-python",
-    "pillow==10.3.0",
-    "selenium==4.8.3",
-    "undetected-chromedriver==3.4.6",
-    "webdriver-manager==3.8.6",
     "pillow",
     "python-dotenv",
     "requests",
